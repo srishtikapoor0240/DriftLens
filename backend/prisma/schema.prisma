@@ -1,0 +1,72 @@
+generator client {
+provider = "prisma-client-js"
+}
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+// Stores each version of a prompt
+model PromptVersion {
+id Int @id @default(autoincrement())
+versionId String @unique // e.g. "v1.4.2"
+slug String // e.g. "verbose-prod"
+promptText String
+model String
+author String
+tag String // "baseline" | "stable" | "warning" | "alert"
+createdAt DateTime @default(now())
+runs BenchmarkRun[]
+analyses DriftAnalysis[]
+}
+// One analysis = comparing two prompts across benchmark questions
+model DriftAnalysis {
+id Int @id @default(autoincrement())
+promptA String
+promptB String
+model String
+driftScore Float
+similarity Float
+verbosity Float
+confidence Float
+creativity Float
+refusalRate Float
+hallucinRisk Float
+sentiment Float
+toxicity Float
+incidentFlag Boolean @default(false)
+createdAt DateTime @default(now())
+versionId Int?
+version PromptVersion? @relation(fields: [versionId], references: [id])
+runs BenchmarkRun[]
+}
+// One run = one benchmark question tested against one prompt
+model BenchmarkRun {
+id Int @id @default(autoincrement())
+question String
+responseA String
+responseB String
+embeddingA Float[]
+embeddingB Float[]
+similarity Float
+refusalA Boolean
+refusalB Boolean
+tokensA Int
+tokensB Int
+sentiment Float
+runAt DateTime @default(now())
+analysisId Int?
+analysis DriftAnalysis? @relation(fields: [analysisId], references: [id])
+versionId Int?
+version PromptVersion? @relation(fields: [versionId], references: [id])
+}
+// Stores safety incidents / alerts
+model SafetyAlert {
+id Int @id @default(autoincrement())
+level String // "crit" | "warn" | "info"
+title String
+description String
+barValue Float
+fromVersion String
+toVersion String
+createdAt DateTime @default(now())
+}
