@@ -890,106 +890,59 @@ IMPORTANT RULES:
 }
 
 async function runAnalysis() {
-  if(analysisRunning) return;
-
-  const promptA = (document.getElementById('prompt-a')||{}).value||'';
-  const promptB = (document.getElementById('prompt-b')||{}).value||'';
-
-  if(!promptA.trim() || !promptB.trim()) {
-    const sa = document.getElementById('stream-area');
-    if(sa) sa.innerHTML = '<div style="color:var(--coral);font-family:var(--font-mono);font-size:12px;padding:20px">// Error: Both Prompt A and Prompt B are required.<br>// Fill in both tabs before running analysis.</div>';
-    return;
-  }
-
+  if (analysisRunning) return;
   analysisRunning = true;
-  const btn = document.getElementById('run-btn');
+
+  const btn      = document.getElementById('run-btn');
   const statusEl = document.getElementById('stream-status');
   const streamArea = document.getElementById('stream-area');
-  const metaBar = document.getElementById('stream-meta-bar');
 
-  if(btn){ btn.disabled=true; btn.innerHTML='<span class="api-spinner"></span> Calling Claude API...'; }
-  if(statusEl){ statusEl.textContent='CALLING API'; statusEl.style.color='var(--amber)'; }
-  if(metaBar) metaBar.style.display='flex';
-
-  // Clear stream area
-  if(streamArea) streamArea.innerHTML = '<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:11px;padding:0 0 12px 0;letter-spacing:1px">// CONNECTING TO CLAUDE EVALUATION ENGINE...</div>';
+  // Show loading state
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Analyzing...';
+  statusEl.textContent = 'STREAMING';
+  statusEl.style.color = 'var(--emerald)';
+  streamArea.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-family:var(--font-mono)">Sending prompts to OpenAI... please wait.</div>';
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('http://localhost:5000/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1000,
-        messages: [{
-          role: "user",
-          content: buildAnalysisPrompt(promptA, promptB)
-        }]
+        promptA: document.getElementById('prompt-a').value,
+        promptB: document.getElementById('prompt-b').value,
+        model:   document.getElementById('model-sel').value,
       })
     });
 
-    if(!response.ok) {
-      const err = await response.text();
-      throw new Error(`API ${response.status}: ${err.slice(0,120)}`);
-    }
-
     const data = await response.json();
 
-    if(!data.content || !data.content[0] || !data.content[0].text) {
-      throw new Error('Unexpected API response format');
-    }
+    if (!data.success) throw new Error(data.error);
 
-    const fullText = data.content[0].text;
+    // Show results in stream area
+    streamArea.innerHTML = `
+      <p style='color:var(--emerald);font-family:var(--font-mono)'>✓ Analysis complete — ${data.runs.length} benchmark questions tested</p>
+      ${data.runs.slice(0, 2).map(r => `
+        <div style='margin-top:14px;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px'>
+          <div style='color:var(--cyan);font-family:var(--font-mono);font-size:11px'>${r.question}</div>
+          <div style='color:var(--text-secondary);font-size:12px;margin-top:6px'>${r.responseB.slice(0,200)}...</div>
+        </div>
+      `).join('')}
+    `;
 
-    // Split visible text from metrics JSON
-    const metricsMatch = fullText.match(/<metrics>([\s\S]*?)<\/metrics>/);
-    const visibleText = metricsMatch
-      ? fullText.replace(/<metrics>[\s\S]*?<\/metrics>/, '').trim()
-      : fullText;
+    finishAnalysis(data.metrics);
 
-    // Update status
-    if(statusEl){ statusEl.textContent='STREAMING'; statusEl.style.color='var(--emerald)'; }
-    if(btn){ btn.innerHTML='<span class="api-spinner"></span> Streaming...'; }
-
-    // Clear and animate stream
-    if(streamArea) streamArea.innerHTML = '';
-    await animateStream(visibleText, streamArea);
-
-    // Parse and apply metrics
-    let parsedMetrics = null;
-    if(metricsMatch) {
-      try {
-        const jsonStr = metricsMatch[1].trim().replace(/```json|```/g,'');
-        parsedMetrics = JSON.parse(jsonStr);
-      } catch(parseErr) {
-        console.warn('Metrics parse failed, using fallback', parseErr);
-      }
-    }
-
-    if(parsedMetrics) {
-      applyMetrics(parsedMetrics);
-    } else {
-      applyFallbackMetrics();
-    }
-
-    if(statusEl){ statusEl.textContent='COMPLETE'; statusEl.style.color='var(--cyan)'; }
-    if(btn){ btn.disabled=false; btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Run Again'; }
-
-  } catch(err) {
-    console.error('DriftLens API error:', err);
-    if(streamArea) {
-      streamArea.innerHTML = `<div style="color:var(--coral);font-family:var(--font-mono);font-size:12px;line-height:1.8;padding:4px 0">
-        // ANALYSIS ENGINE ERROR<br>
-        // ${err.message}<br><br>
-        <span style="color:var(--text-muted)">// Check your network connection and API access.<br>// DriftLens requires connectivity to the Anthropic API.</span>
-      </div>`;
-    }
-    if(statusEl){ statusEl.textContent='ERROR'; statusEl.style.color='var(--coral)'; }
-    if(btn){ btn.disabled=false; btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Retry Analysis'; }
-  } finally {
-    analysisRunning = false;
+  } catch (err) {
+    streamArea.innerHTML = `<div style='color:var(--coral)'>Error: ${err.message}</div>`;
+    console.error(err);
   }
+
+  btn.disabled = false;
+  btn.innerHTML = '▸ Run Again';
+  statusEl.textContent = 'COMPLETE';
+  analysisRunning = false;
 }
+
 
 /* Animate text word by word to simulate live streaming */
 function animateStream(text, container) {
