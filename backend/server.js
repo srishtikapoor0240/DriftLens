@@ -12,6 +12,7 @@ app.use('/api/versions', require('./routes/versions'));
 app.use('/api/benchmarks', require('./routes/benchmarks'));
 app.use('/api/clusters', require('./routes/clusters'));
 app.use('/api/safety', require('./routes/safety'));
+app.use('/api/overview', require('./routes/overview'));
 // Health check — open http://localhost:5000 to confirm it runs
 app.get('/', (req, res) => res.json({ status: 'DriftLens backend running' }));
 app.listen(PORT, () => {

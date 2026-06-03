@@ -888,7 +888,91 @@ IMPORTANT RULES:
 - All numbers must reflect your genuine analysis of the two specific prompts provided
 - The example response in Step 1 should clearly demonstrate what changed`;
 }
+function finishAnalysis(metrics) {
 
+    const vals = [
+        metrics.verbosity,
+        metrics.confidence,
+        metrics.creativity,
+        metrics.refusalRate,
+        metrics.hallucinRisk,
+        metrics.sentiment,
+        metrics.toxicity,
+    ];
+
+    vals.forEach((v, i) => {
+
+        const safeV = Math.max(0, Math.min(100, v ?? 0));
+
+        const bar = document.getElementById('mbar-' + i);
+        const val = document.getElementById('mval-' + i);
+
+        if (bar) {
+            setTimeout(() => {
+                bar.style.width = safeV + '%';
+            }, i * 120);
+        }
+
+        if (val) {
+            setTimeout(() => {
+                val.textContent = safeV;
+                val.style.color = 'var(--cyan)';
+            }, i * 120 + 1200);
+        }
+    });
+
+    setTimeout(() => {
+        drawDNA(vals, '#FF5C7A', true);
+    }, 500);
+
+    if ((metrics.driftScore ?? 0) > 0.6) {
+
+        const iz = document.getElementById('incident-zone');
+
+        if (iz) {
+
+            iz.innerHTML = `
+                <div class="incident-report panel">
+
+                    <div class="incident-head">
+
+                        <span class="incident-id">
+                            INCIDENT DETECTED - Drift:
+                            ${(metrics.driftScore ?? 0).toFixed(2)}
+                        </span>
+
+                        <span class="incident-risk">
+                            HIGH RISK
+                        </span>
+
+                    </div>
+
+                    <div class="incident-body">
+
+                        Significant behavioral drift detected between prompts.
+
+                        <br><br>
+
+                        Refusal Rate:
+                        ${metrics.refusalRate ?? 0}
+
+                        &nbsp;&nbsp;
+
+                        Verbosity:
+                        ${metrics.verbosity ?? 0}
+
+                        &nbsp;&nbsp;
+
+                        Similarity:
+                        ${metrics.avgSimilarity ?? 0}
+
+                    </div>
+
+                </div>
+            `;
+        }
+    }
+}
 async function runAnalysis() {
   if (analysisRunning) return;
   analysisRunning = true;
@@ -1182,8 +1266,24 @@ function buildPage(id){
 }
 
 /* ─── OVERVIEW ─── */
-function buildOverview(){
-  const c=document.getElementById('page-overview');
+async function buildOverview(){
+  const c = document.getElementById('page-overview');
+  c.innerHTML = '<div style="padding:40px;color:var(--text-muted)">Loading...</div>';
+
+  let liveData = {};
+  try {
+    const r = await fetch('http://localhost:5000/api/overview');
+    liveData = await r.json();
+  } catch(e) {
+    console.log('Using demo data (backend not running)');
+  }
+
+  const drift     = liveData.latestDrift?.toFixed(2)  ?? '0.73';
+  const safety    = liveData.safetyScore?.toFixed(1)  ?? '96.8';
+  const simil     = liveData.similarity?.toFixed(2)   ?? '0.61';
+  const runs      = liveData.totalRuns ?? 2847;
+
+
   c.innerHTML=`
   <div class="pg-header">
     <div><h1 class="pg-title">Platform Overview</h1><div class="pg-sub">// Last sync: 2 min ago &nbsp;&bull;&nbsp; 14 active benchmark runs</div></div>
@@ -1271,12 +1371,54 @@ function drawMiniHeatmap(){
     ctx.fillRect(1+cc*cw+1,1+r*ch+1,cw-2,ch-2);
   }
 }
+function openNewVersionModal() {
+  const vId = prompt('Version ID (e.g. v1.5.0):');
+  const slug = prompt('Slug (e.g. safety-patch):');
+  const text = prompt('Paste the prompt text:');
+  const model = prompt('Model (e.g. gpt-4o):');
+  const author = prompt('Author name:');
+  const tag = prompt('Tag (baseline / stable / warning / alert):');
 
+  if (!vId || !text) return;
+
+  fetch('http://localhost:5000/api/versions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      versionId: vId,
+      slug,
+      promptText: text,
+      model,
+      author,
+      tag
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      alert('Version saved!');
+      buildTimeline();
+    } else {
+      alert('Error: ' + d.error);
+    }
+  });
+}
 /* ─── TIMELINE ─── */
 function buildTimeline(){
   const c=document.getElementById('page-prompt-versions');
   const tagCols={baseline:'#00D4FF',stable:'#00E5A0',warning:'#FFB444',alert:'#FF5C7A'};
-  let html=`<div class="pg-header"><div><h1 class="pg-title">Prompt Version Timeline</h1><div class="pg-sub">// ${V.length} versions tracked &nbsp;&bull;&nbsp; GitHub-style behavioral history</div></div><div class="pg-actions"><button class="btn btn-ghost">Import</button><button class="btn btn-primary">+ New Version</button></div></div>`;
+  let html=`<div class="pg-header">
+<div>
+<h1 class="pg-title">Prompt Version Timeline</h1>
+<div class="pg-sub">// ${V.length} versions tracked &nbsp;&bull;&nbsp; GitHub-style behavioral history</div>
+</div>
+<div class="pg-actions">
+<button class="btn btn-ghost">Import</button>
+<button class="btn btn-primary" onclick="openNewVersionModal()">+ New Version</button>
+</div>
+</div>`;
   html+=`<div class="panel" style="margin-bottom:16px"><div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cyan)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>Version History</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Hover nodes for details</div></div><div class="tl-scroll"><div class="tl-track">`;
   V.forEach((v,i)=>{
     const [r,g,b]=v.col;const tc=tagCols[v.tag];
@@ -1483,16 +1625,192 @@ function buildSafety(){
 }
 
 /* ─── BENCHMARK ─── */
-function buildBenchmark(){
-  const c=document.getElementById('page-benchmark');
-  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Benchmark Runs</h1><div class="pg-sub">// Automated evaluation history &bull; ${BENCH.length} recent runs</div></div><div class="pg-actions"><button class="btn btn-ghost">Filter</button><button class="btn btn-primary">+ New Suite</button></div></div>
-  <div class="panel">
-    <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cyan)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>Recent Runs</div><span class="panel-action">View all</span></div>
-    ${BENCH.map(b=>{
-      const sc=b.status==='pass'?'var(--emerald)':b.status==='fail'?'var(--coral)':'var(--amber)';
-      return`<div class="bench-row"><div class="bench-dot ${b.status==='pass'?'pass':b.status==='fail'?'fail':'warn-d'}"></div><div class="bench-info"><div class="bench-name">${b.name}</div><div class="bench-meta">${b.id} &bull; ${b.ver} &bull; ${b.model}</div></div><div class="bench-score" style="color:${sc}">${b.score}</div><div class="bench-dur">${b.dur}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);width:54px;text-align:right;flex-shrink:0">${b.time}</div></div>`;
-    }).join('')}
-  </div>`;
+async function buildBenchmark() {
+
+  const c = document.getElementById('page-benchmark');
+
+  // Loading screen
+  c.innerHTML = `
+    <div style="padding:40px;color:var(--text-muted)">
+      Loading runs...
+    </div>
+  `;
+
+  let BENCH = [];
+
+  try {
+
+   const r = await fetch('http://localhost:5000/api/benchmarks');
+
+if (!r.ok) {
+  throw new Error('Failed to load benchmarks');
+}
+
+BENCH = await r.json();
+  } catch(e) {
+
+    console.log('Using demo benchmark data');
+
+    // FALLBACK DEMO DATA
+    BENCH = [
+      {
+        id:'#042',
+        name:'Safety Regression Suite',
+        ver:'v1.5.0',
+        model:'gpt-4o',
+        status:'fail',
+        score:61.2,
+        dur:'3m 12s',
+        time:'12 min ago'
+      },
+
+      {
+        id:'#041',
+        name:'Full Behavioral Suite',
+        ver:'v1.4.8',
+        model:'claude-3',
+        status:'pass',
+        score:96.8,
+        dur:'2m 48s',
+        time:'1h ago'
+      },
+
+      {
+        id:'#040',
+        name:'Full Behavioral Suite',
+        ver:'v1.4.7',
+        model:'gemini',
+        status:'warn',
+        score:78.5,
+        dur:'2m 55s',
+        time:'3h ago'
+      }
+    ];
+  }
+
+  // MAIN UI
+  c.innerHTML = `
+
+    <div class="pg-header">
+
+      <div>
+        <h1 class="pg-title">Benchmark Runs</h1>
+
+        <div class="pg-sub">
+          // Automated evaluation history &bull; 
+          ${BENCH.length} recent runs
+        </div>
+      </div>
+
+      <div class="pg-actions">
+        <button class="btn btn-ghost">Filter</button>
+        <button class="btn btn-primary">+ New Suite</button>
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="panel-head">
+
+        <div class="panel-title">
+
+          <svg 
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            stroke="var(--cyan)"
+            fill="none"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <circle cx="12" cy="12" r="10"/>
+
+            <polygon
+              points="10 8 16 12 10 16 10 8"
+              fill="currentColor"
+              stroke="none"
+            />
+
+          </svg>
+
+          Recent Runs
+
+        </div>
+
+        <span class="panel-action">
+          View all
+        </span>
+
+      </div>
+
+      ${BENCH.map(b => {
+
+        const sc =
+          b.status === 'pass'
+            ? 'var(--emerald)'
+            : b.status === 'fail'
+            ? 'var(--coral)'
+            : 'var(--amber)';
+
+        return `
+
+          <div class="bench-row">
+
+            <div class="bench-dot ${
+              b.status === 'pass'
+                ? 'pass'
+                : b.status === 'fail'
+                ? 'fail'
+                : 'warn-d'
+            }"></div>
+
+            <div class="bench-info">
+
+              <div class="bench-name">
+                ${b.name}
+              </div>
+
+              <div class="bench-meta">
+                ${b.id} &bull; ${b.model}
+              </div>
+
+            </div>
+
+            <div 
+              class="bench-score"
+              style="color:${sc}"
+            >
+              ${b.score}
+            </div>
+
+            <div class="bench-dur">
+              ${b.questions || 0} Qs
+            </div>
+
+            <div
+              style="
+                font-family:var(--font-mono);
+                font-size:10px;
+                color:var(--text-muted);
+                width:54px;
+                text-align:right;
+                flex-shrink:0
+              "
+            >
+              ${b.time}
+            </div>
+
+          </div>
+
+        `;
+
+      }).join('')}
+
+    </div>
+  `;
 }
 
 /* ─── COMPARE (DIFF + HEATMAP) ─── */
