@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DriftLens — AI Behavioral Analysis Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-void:#010408;--bg-deep:#040C18;--bg-surface:#081424;--bg-raised:#0C1A2E;
+  --bg-glass:rgba(6,16,32,.82);
+  --cyan:#00D4FF;--cyan-glow:rgba(0,212,255,.18);--cyan-subtle:rgba(0,212,255,.07);
+  --violet:#7C5CFC;--violet-glow:rgba(124,92,252,.18);
+  --emerald:#00E5A0;--amber:#FFB444;--coral:#FF5C7A;
+  --border:rgba(0,212,255,.14);--border-subtle:rgba(0,212,255,.07);--border-strong:rgba(0,212,255,.32);
+  --text-primary:#D8EEFF;--text-secondary:rgba(216,238,255,.58);--text-muted:rgba(216,238,255,.28);
+  --font-display:'Oxanium',sans-serif;--font-mono:'Space Mono',monospace;--font-body:'Inter',sans-serif;
+  --sidebar-w:68px;--sidebar-ex:240px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:var(--bg-void);color:var(--text-primary);font-family:var(--font-body);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.glass{background:var(--bg-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border)}
+/* ── LANDING ── */
+#landing{position:relative;min-height:100vh;overflow:hidden}
+#neural-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+#landing::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);background-size:56px 56px;z-index:1;pointer-events:none}
+.landing-content{position:relative;z-index:2}
+nav.top-nav{display:flex;align-items:center;justify-content:space-between;padding:20px 52px;border-bottom:1px solid var(--border-subtle);background:rgba(1,4,8,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),var(--violet));border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:16px;color:#fff;letter-spacing:-1px;flex-shrink:0}
+.logo-text{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--text-primary);letter-spacing:.4px}
+.nav-links{display:flex;gap:36px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--text-secondary);font-size:13.5px;transition:color .2s}
+.nav-links a:hover{color:var(--text-primary)}
+.nav-cta{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;transition:all .2s;letter-spacing:.2px;text-decoration:none;font-family:var(--font-body)}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--border-strong);background:var(--cyan-subtle)}
+.btn-primary{background:linear-gradient(135deg,#00C8F0,#0085B8);color:#001A24;font-weight:700}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,212,255,.3)}
+.btn-outline{background:transparent;color:var(--cyan);border:1px solid var(--border-strong)}
+.btn-outline:hover{background:var(--cyan-glow)}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 52px 64px;max-width:980px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:100px;background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.35);font-family:var(--font-mono);font-size:11px;color:#B8A3FF;letter-spacing:.5px;margin-bottom:36px;animation:badge-pulse 3.5s ease-in-out infinite}
+@keyframes badge-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,92,252,.2)}50%{box-shadow:0 0 0 10px rgba(124,92,252,0)}}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:#7C5CFC;animation:blink 1.8s ease-in-out infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.hero-title{font-family:var(--font-display);font-size:clamp(48px,6vw,76px);font-weight:800;line-height:1.04;letter-spacing:-2.5px;margin-bottom:26px;background:linear-gradient(140deg,#fff 0%,#A8D8FF 30%,#00D4FF 58%,#7C5CFC 100%);background-size:200% 200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 8s linear infinite}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.hero-subtitle{font-size:20px;color:var(--text-secondary);line-height:1.65;max-width:580px;margin-bottom:44px;font-weight:300}
+.hero-subtitle em{font-style:normal;color:var(--cyan)}
+.hero-actions{display:flex;gap:12px;margin-bottom:68px}
+.hero-actions .btn{font-size:15px;padding:12px 26px;border-radius:10px}
+.hero-stats{display:flex;gap:56px;padding-top:44px;border-top:1px solid var(--border-subtle);width:100%;justify-content:center}
+.h-stat-value{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--cyan);display:block;letter-spacing:-1px}
+.h-stat-label{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:5px;text-transform:uppercase}
+.hero>*{animation:fade-up .7s cubic-bezier(.4,0,.2,1) both}
+.hero>*:nth-child(1){animation-delay:.08s}.hero>*:nth-child(2){animation-delay:.18s}
+.hero>*:nth-child(3){animation-delay:.28s}.hero>*:nth-child(4){animation-delay:.38s}.hero>*:nth-child(5){animation-delay:.46s}
+@keyframes fade-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.section-wrap{max-width:1220px;margin:0 auto;padding:80px 52px}
+.section-tag{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:11px;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:18px}
+.section-tag::before{content:'';display:block;width:22px;height:1px;background:var(--cyan)}
+.section-title{font-family:var(--font-display);font-size:clamp(30px,3vw,40px);font-weight:700;letter-spacing:-1px;margin-bottom:52px;line-height:1.15}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.demo-card{border-radius:16px;padding:26px;transition:border-color .25s}
+.demo-card:hover{border-color:var(--border-strong)}
+.demo-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.demo-tag{font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:4px;letter-spacing:1px}
+.tag-a{background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.22)}
+.tag-b{background:rgba(124,92,252,.1);color:#B8A3FF;border:1px solid rgba(124,92,252,.22)}
+.demo-prompt{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);line-height:1.6;padding:14px 16px;background:rgba(0,0,0,.35);border-radius:8px;border-left:2px solid var(--border);margin-bottom:16px}
+.demo-response{font-size:13px;color:var(--text-secondary);line-height:1.75}
+.demo-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.chip{font-family:var(--font-mono);font-size:10px;padding:4px 9px;border-radius:4px;background:var(--bg-raised);color:var(--text-muted);border:1px solid var(--border-subtle)}
+.chip.ok{color:var(--emerald);border-color:rgba(0,229,160,.2);background:rgba(0,229,160,.05)}
+.chip.bad{color:var(--coral);border-color:rgba(255,92,122,.2);background:rgba(255,92,122,.05)}
+.chip.warn{color:var(--amber);border-color:rgba(255,180,68,.2);background:rgba(255,180,68,.05)}
+.drift-widget{border-radius:16px;padding:28px;overflow:hidden}
+.drift-widget-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.drift-label{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.drift-big{font-family:var(--font-display);font-size:58px;font-weight:800;color:var(--amber);text-shadow:0 0 50px rgba(255,180,68,.35);letter-spacing:-2px;line-height:1}
+.sim-value{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--cyan);letter-spacing:-1px;text-align:right}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.feat-card{border-radius:16px;padding:28px;cursor:default;transition:all .3s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
+.feat-card::after{content:'';position:absolute;inset:0;border-radius:16px;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,212,255,.07),transparent 55%);opacity:0;transition:opacity .3s;pointer-events:none}
+.feat-card:hover::after{opacity:1}
+.feat-card:hover{transform:translateY(-3px);border-color:var(--border-strong)!important}
+.feat-icon{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.feat-title{font-family:var(--font-display);font-size:17px;font-weight:600;margin-bottom:10px;letter-spacing:-.3px}
+.feat-desc{font-size:13.5px;color:var(--text-secondary);line-height:1.75}
+footer.site-footer{border-top:1px solid var(--border-subtle);padding:36px 52px;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-family:var(--font-mono);font-size:11px;color:var(--text-muted)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--text-secondary)}
+/* ── DASHBOARD SHELL ── */
+#dashboard{display:none;height:100vh;overflow:hidden}
+.db-layout{display:flex;height:100%}
+.sidebar{width:var(--sidebar-w);background:var(--bg-surface);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;padding:18px 0;flex-shrink:0;transition:width .3s cubic-bezier(.4,0,.2,1);overflow:hidden;z-index:20}
+.sidebar:hover{width:var(--sidebar-ex)}
+.sb-logo{display:flex;align-items:center;gap:12px;padding:0 18px;margin-bottom:28px;white-space:nowrap}
+.sb-logo-mark{width:32px;height:32px;min-width:32px;background:linear-gradient(135deg,var(--cyan),var(--violet));border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff}
+.sb-logo-text{font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--text-primary);opacity:0;transition:opacity .2s;white-space:nowrap}
+.sidebar:hover .sb-logo-text{opacity:1}
+.sb-nav{flex:1;display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.sb-item{display:flex;align-items:center;gap:13px;padding:10px 8px;border-radius:8px;cursor:pointer;transition:all .18s;color:var(--text-muted);text-decoration:none;position:relative;white-space:nowrap;border:none;background:transparent;width:100%;font-family:var(--font-body);text-align:left}
+.sb-item:hover{background:var(--cyan-subtle);color:var(--text-secondary)}
+.sb-item.active{background:rgba(0,212,255,.1);color:var(--cyan)}
+.sb-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:16px;background:var(--cyan);border-radius:1px}
+.sb-item svg{width:19px;height:19px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sb-label{font-size:13px;opacity:0;transition:opacity .18s;white-space:nowrap}
+.sidebar:hover .sb-label{opacity:1}
+.sb-divider{height:1px;background:var(--border-subtle);margin:6px 10px}
+.sb-bottom{padding:0 10px}
+.db-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-deep);min-width:0}
+.topbar{height:56px;background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;padding:0 28px;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:12px}
+.bc-dim{color:var(--text-muted)}.bc-sep{color:var(--text-muted);opacity:.4}.bc-curr{color:var(--text-primary)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-status{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;color:var(--emerald);padding:6px 12px;border-radius:6px;background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.18)}
+.tb-btn{width:32px;height:32px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s}
+.tb-btn:hover{background:var(--cyan-subtle);color:var(--text-primary);border-color:var(--border-strong)}
+.tb-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;cursor:pointer;letter-spacing:.5px}
+.db-content{flex:1;overflow-y:auto;padding:28px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.db-content::-webkit-scrollbar{width:3px}
+.db-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* ── PAGE SYSTEM ── */
+.db-page{display:none}
+.db-page.active{display:block;animation:page-in .25s ease}
+@keyframes page-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pg-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.pg-title{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-.5px}
+.pg-sub{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-top:5px}
+.pg-actions{display:flex;gap:10px}
+.pg-actions .btn{font-size:13px;padding:8px 16px;border-radius:8px}
+/* ── OVERVIEW ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:20px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border)}
+.sc-label{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.sc-value{font-family:var(--font-display);font-size:32px;font-weight:700;letter-spacing:-1.5px;margin-bottom:8px}
+.sc-delta{font-family:var(--font-mono);font-size:11px}
+.d-up{color:var(--emerald)}.d-down{color:var(--coral)}.d-nil{color:var(--text-muted)}
+.db-g2{display:grid;grid-template-columns:1fr 360px;gap:14px;margin-bottom:14px}
+.db-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.panel{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.panel:hover{border-color:var(--border)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border-subtle)}
+.panel-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500}
+.panel-title svg{width:15px;height:15px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.panel-action{font-family:var(--font-mono);font-size:11px;color:var(--cyan);cursor:pointer;opacity:.65;transition:opacity .2s}
+.panel-action:hover{opacity:1}
+.panel-body{padding:16px 18px}
+.v-list{display:flex;flex-direction:column}
+.v-item{display:flex;align-items:center;gap:13px;padding:11px 18px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .14s}
+.v-item:last-child{border-bottom:none}
+.v-item:hover{background:rgba(0,212,255,.03)}
+.v-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.v-info{flex:1;min-width:0}
+.v-name{font-family:var(--font-mono);font-size:12px;color:var(--text-primary);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v-meta{font-size:11px;color:var(--text-muted)}
+.v-score{font-family:var(--font-display);font-size:13px;font-weight:700;flex-shrink:0}
+/* ── TIMELINE ── */
+.tl-scroll{overflow-x:auto;padding-bottom:8px}
+.tl-scroll::-webkit-scrollbar{height:3px}
+.tl-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tl-track{display:flex;align-items:center;min-width:max-content;padding:80px 60px 120px}
+.tl-node-wrap{position:relative;display:flex;flex-direction:column;align-items:center}
+.tl-conn{height:2px;width:110px;flex-shrink:0}
+.tl-circle{width:56px;height:56px;border-radius:50%;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;font-weight:700;position:relative;flex-shrink:0}
+.tl-circle:hover{transform:scale(1.14)}
+.tl-pulse-ring{position:absolute;inset:-7px;border-radius:50%;pointer-events:none}
+.tl-labels{margin-top:14px;text-align:center;pointer-events:none;max-width:110px}
+.tl-ver{font-family:var(--font-mono);font-size:12px;font-weight:700}
+.tl-slug{font-size:11px;color:var(--text-muted);margin-top:2px}
+.tl-date-lbl{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);margin-top:2px}
+.tl-card{position:absolute;top:80px;left:50%;transform:translateX(-50%) translateY(8px);width:275px;border-radius:12px;padding:16px;z-index:50;pointer-events:none;opacity:0;transition:opacity .22s,transform .22s;background:rgba(4,10,20,.95);border:1px solid var(--border);backdrop-filter:blur(16px)}
+.tl-node-wrap:hover .tl-card{opacity:1;transform:translateX(-50%) translateY(0)}
+.tl-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tl-card-author{font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+.tl-card-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:1.5px;padding:2px 8px;border-radius:4px}
+.tl-metric{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.tl-metric-k{font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+.tl-metric-v{font-size:13px;font-weight:600}
+.tl-summary{font-size:11.5px;color:var(--text-secondary);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle)}
+/* ── RADAR / SCORE CARDS ── */
+.radar-layout{display:grid;grid-template-columns:1fr 260px;gap:16px;margin-bottom:16px}
+.radar-panel{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden}
+.radar-body{padding:20px;display:flex;justify-content:center}
+.score-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.score-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:16px;transition:all .2s}
+.score-card:hover{transform:translateY(-2px);border-color:var(--border)}
+.sco-label{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.sco-val{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.sco-delta{font-family:var(--font-mono);font-size:11px;margin-bottom:12px}
+.sco-bar{height:3px;background:var(--border-subtle);border-radius:2px}
+.sco-bar-fill{height:100%;border-radius:2px;transition:width 1.2s ease}
+.vs-panel{padding:16px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.vs-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--border-subtle);cursor:pointer;transition:all .2s;background:transparent;font-family:var(--font-body);text-align:left;width:100%;color:var(--text-secondary)}
+.vs-btn.on{background:rgba(255,255,255,.04)}
+.vs-btn:hover{background:rgba(0,212,255,.04)}
+.vs-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vs-id{font-family:var(--font-mono);font-size:12px;font-weight:700;display:block}
+.vs-slug{font-size:11px;color:var(--text-muted);display:block}
+.vs-drift-val{font-family:var(--font-display);font-size:15px;font-weight:700;margin-left:auto;flex-shrink:0}
+/* ── GALAXY ── */
+.galaxy-outer{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border-subtle);margin-bottom:14px;background:var(--bg-surface)}
+.galaxy-canvas{display:block;width:100%}
+.galaxy-legend{position:absolute;top:16px;right:16px;background:rgba(4,10,20,.92);border:1px solid var(--border-subtle);border-radius:10px;padding:14px 16px;backdrop-filter:blur(8px)}
+.galaxy-legend-title{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.gl-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;color:var(--text-secondary);cursor:pointer}
+.gl-row:last-child{margin-bottom:0}
+.gl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.galaxy-ver-bar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;background:rgba(4,10,20,.92);border:1px solid var(--border-subtle);border-radius:100px;padding:8px 14px;backdrop-filter:blur(8px)}
+.gv-btn{font-family:var(--font-mono);font-size:10px;padding:4px 10px;border-radius:100px;cursor:pointer;transition:all .2s;border:1px solid var(--border-subtle);background:transparent;color:var(--text-muted)}
+.gv-btn.on{color:#fff}
+.galaxy-tip{position:absolute;pointer-events:none;z-index:30;padding:11px 13px;background:rgba(4,10,20,.96);border:1px solid var(--border);border-radius:9px;backdrop-filter:blur(8px);max-width:210px;display:none}
+.gt-head{font-family:var(--font-mono);font-size:10px;letter-spacing:1px;margin-bottom:5px}
+.gt-txt{font-size:12px;color:var(--text-secondary);line-height:1.55}
+/* ── DIFF VIEWER ── */
+.diff-ctrl{display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:14px 18px;background:var(--bg-surface);border-radius:10px;border:1px solid var(--border-subtle)}
+.diff-sel{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)}
+.diff-sel select{background:var(--bg-raised);border:1px solid var(--border);color:var(--text-primary);padding:5px 8px;border-radius:6px;font-family:var(--font-mono);font-size:11px;cursor:pointer;outline:none}
+.diff-vs{font-family:var(--font-mono);font-size:13px;color:var(--text-muted)}
+.diff-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.diff-panel{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden}
+.diff-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border-subtle)}
+.diff-body{padding:20px 18px;font-family:var(--font-mono);font-size:12px;line-height:2.1;color:var(--text-secondary);min-height:260px}
+.d-add{background:rgba(0,229,160,.15);color:var(--emerald);border-radius:3px;padding:1px 3px}
+.d-del{background:rgba(255,92,122,.12);color:var(--coral);border-radius:3px;padding:1px 3px;text-decoration:line-through}
+.d-tone{background:rgba(255,180,68,.13);border-radius:3px;padding:1px 3px;border-bottom:2px solid rgba(255,180,68,.5);color:var(--amber)}
+.d-info{background:rgba(124,92,252,.12);border-radius:3px;padding:1px 3px;color:#B8A3FF}
+.diff-legend{display:flex;gap:18px;padding:11px 18px;border-top:1px solid var(--border-subtle);background:rgba(0,0,0,.15)}
+.dl-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
+.dl-sw{width:20px;height:8px;border-radius:2px}
+.hm-wrap{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:20px;position:relative}
+.hm-title{font-size:13.5px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.hm-title svg{width:15px;height:15px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hm-tip{position:absolute;pointer-events:none;background:rgba(4,10,20,.96);border:1px solid var(--border);border-radius:7px;padding:8px 11px;font-size:11px;font-family:var(--font-mono);display:none;z-index:20;color:var(--text-secondary)}
+/* ── SAFETY ── */
+.safety-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.ssum-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;padding:20px;text-align:center;transition:all .2s}
+.ssum-card:hover{transform:translateY(-2px)}
+.ssum-icon{font-size:24px;margin-bottom:8px}
+.ssum-val{font-family:var(--font-display);font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.ssum-lbl{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase}
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-card{border-radius:12px;padding:18px;border:1px solid;transition:transform .2s;animation:slide-in .4s ease both}
+.alert-card:hover{transform:translateX(4px)}
+@keyframes slide-in{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.alert-card.crit{border-color:rgba(255,92,122,.3);background:rgba(255,92,122,.05)}
+.alert-card.warn{border-color:rgba(255,180,68,.3);background:rgba(255,180,68,.05)}
+.alert-card.info{border-color:rgba(0,212,255,.18);background:rgba(0,212,255,.04)}
+.alert-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.alert-badge{font-family:var(--font-mono);font-size:9px;letter-spacing:2px;padding:3px 9px;border-radius:4px;display:inline-flex;align-items:center;gap:5px}
+.alert-badge.crit{background:rgba(255,92,122,.2);color:var(--coral)}
+.alert-badge.warn{background:rgba(255,180,68,.2);color:var(--amber)}
+.alert-badge.info{background:rgba(0,212,255,.1);color:var(--cyan)}
+.alert-pulse{width:6px;height:6px;border-radius:50%;animation:ap 1.8s ease infinite;flex-shrink:0}
+@keyframes ap{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.alert-time{font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+.alert-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--text-primary)}
+.alert-desc{font-size:12px;color:var(--text-secondary);line-height:1.65;margin-bottom:12px}
+.alert-bar{height:4px;background:var(--border-subtle);border-radius:2px}
+.alert-bar-fill{height:100%;border-radius:2px;transition:width 1.4s ease}
+/* ── BENCHMARK ── */
+.bench-row{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:background .14s}
+.bench-row:last-child{border-bottom:none}
+.bench-row:hover{background:rgba(0,212,255,.03)}
+.bench-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bench-dot.pass{background:var(--emerald)}.bench-dot.fail{background:var(--coral)}.bench-dot.warn-d{background:var(--amber)}
+.bench-info{flex:1;min-width:0}
+.bench-name{font-size:13px;font-weight:500;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary)}
+.bench-meta{font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+.bench-score{font-family:var(--font-display);font-size:18px;font-weight:700;width:52px;text-align:right;flex-shrink:0}
+.bench-dur{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);width:56px;text-align:right;flex-shrink:0}
+/* ── TRANSITION OVERLAY ── */
+#overlay{position:fixed;inset:0;background:var(--bg-void);z-index:999;opacity:0;pointer-events:none;transition:opacity .35s ease}
+#overlay.on{opacity:1;pointer-events:all}
+
+/* ─── ANALYSIS WORKSPACE ─── */
+.aws-layout{display:grid;grid-template-columns:300px 1fr 280px;gap:16px;height:calc(100vh - 160px);min-height:560px}
+.aws-panel{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.aws-panel-head{padding:14px 18px;border-bottom:1px solid var(--border-subtle);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.aws-panel-head svg{width:14px;height:14px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.aws-panel-body{flex:1;overflow-y:auto;padding:16px}
+.aws-panel-body::-webkit-scrollbar{width:3px}
+.aws-panel-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.vtab{display:flex;gap:4px;padding:14px 16px 0;border-bottom:1px solid var(--border-subtle);flex-shrink:0}
+.vtab-btn{font-family:var(--font-mono);font-size:11px;padding:6px 14px;border-radius:6px 6px 0 0;border:1px solid var(--border-subtle);border-bottom:none;cursor:pointer;background:transparent;color:var(--text-muted);transition:all .18s}
+.vtab-btn.active{background:var(--bg-raised);color:var(--cyan);border-color:var(--border)}
+.prompt-textarea{width:100%;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:8px;padding:12px;color:var(--text-primary);font-family:var(--font-mono);font-size:12px;line-height:1.7;resize:none;outline:none;transition:border-color .2s;min-height:180px}
+.prompt-textarea:focus{border-color:var(--border-strong)}
+.model-sel{width:100%;background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:12px;cursor:pointer;outline:none}
+.temp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.temp-label{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px}
+.temp-slider{width:100%;accent-color:var(--cyan);cursor:pointer}
+.run-analysis-btn{width:100%;padding:14px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--cyan),#0085B8);color:#001A24;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-body);letter-spacing:.3px;margin-top:12px}
+.run-analysis-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,212,255,.35)}
+.run-analysis-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.stream-area{flex:1;padding:20px;font-family:var(--font-mono);font-size:12px;line-height:1.9;color:var(--text-secondary);position:relative;overflow-y:auto;min-height:200px}
+.stream-cursor{display:inline-block;width:2px;height:14px;background:var(--cyan);animation:cur-blink .8s ease infinite;vertical-align:middle;margin-left:1px}
+@keyframes cur-blink{0%,100%{opacity:1}50%{opacity:0}}
+.beh-label{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--font-mono);letter-spacing:.5px;margin:2px;animation:label-pop .3s ease;vertical-align:middle}
+@keyframes label-pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.beh-up{background:rgba(0,229,160,.15);color:var(--emerald);border:1px solid rgba(0,229,160,.2)}
+.beh-down{background:rgba(255,92,122,.12);color:var(--coral);border:1px solid rgba(255,92,122,.2)}
+.metric-bar-wrap{margin-bottom:14px}
+.metric-bar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.metric-bar-name{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase}
+.metric-bar-val{font-family:var(--font-display);font-size:13px;font-weight:700}
+.metric-bar-track{height:5px;background:var(--border-subtle);border-radius:3px;overflow:hidden}
+.metric-bar-fill{height:100%;border-radius:3px;transition:width 1.5s cubic-bezier(.4,0,.2,1);width:0}
+.dna-wrap{padding:20px;border-top:1px solid var(--border-subtle);flex-shrink:0}
+.dna-title{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;text-align:center}
+.stream-onboard{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:30px;color:var(--text-muted)}
+.stream-onboard-icon{width:56px;height:56px;border-radius:14px;background:rgba(0,212,255,.07);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.stream-onboard-icon svg{stroke:rgba(0,212,255,.4);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.incident-report{background:rgba(255,92,122,.04);border:1px solid rgba(255,92,122,.25);border-radius:10px;padding:16px;margin-top:14px;animation:slide-in .4s ease}
+.incident-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.incident-id{font-family:var(--font-mono);font-size:10px;color:var(--coral);letter-spacing:1.5px}
+.incident-risk{font-family:var(--font-mono);font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(255,92,122,.2);color:var(--coral)}
+.incident-body{font-size:12px;color:var(--text-secondary);line-height:1.7}
+.expl-item{padding:10px 12px;border-radius:8px;background:rgba(0,212,255,.04);border:1px solid var(--border-subtle);margin-bottom:8px;cursor:pointer;transition:all .18s}
+.expl-item:hover{border-color:var(--border);background:rgba(0,212,255,.07)}
+.expl-metric{font-family:var(--font-mono);font-size:11px;color:var(--cyan);margin-bottom:4px}
+.expl-reason{font-size:12px;color:var(--text-secondary);line-height:1.6}
+/* Loading spinner for API call */
+.api-spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,212,255,.3);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stream-meta-bar{display:flex;align-items:center;gap:16px;padding:8px 18px;border-bottom:1px solid var(--border-subtle);background:rgba(0,0,0,.2);flex-shrink:0}
+.stream-meta-item{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted)}
+.stream-meta-val{color:var(--text-secondary);font-weight:700}
+</style>
+</head>
+<body>
+<div id="overlay"></div>
+
+<!-- ═══════════════ LANDING PAGE ═══════════════ -->
+<div id="landing">
+  <canvas id="neural-canvas"></canvas>
+  <div class="landing-content">
+
+    <nav class="top-nav">
+      <a href="#" class="nav-logo">
+        <div class="logo-mark">&#916;</div>
+        <span class="logo-text">DriftLens</span>
+      </a>
+      <div class="nav-cta">
+        <a href="https://github.com" target="_blank" class="btn btn-ghost" style="gap:8px;color:var(--text-secondary)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:.75"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <button class="btn btn-primary" onclick="goDash()">Launch Analysis &#8594;</button>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        DriftLens v2.1 &mdash; Semantic clustering &amp; multi-model support live
+      </div>
+      <h1 class="hero-title">LLM Behavioral<br>Drift Analysis</h1>
+      <p class="hero-subtitle">
+        Detect <em>semantic</em>, <em>behavioral</em>, and <em>safety regressions</em>
+        across evolving LLM prompts. Observability infrastructure for the AI age.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="goDash()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Launch Analysis
+        </button>
+        <button class="btn btn-outline" onclick="goDash()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Run Live Analysis
+        </button>
+      </div>
+      <div class="hero-stats" style="gap:40px">
+        <div style="text-align:center"><span class="h-stat-value" style="font-size:13px;letter-spacing:.5px;font-family:var(--font-mono);color:var(--cyan)">text-embedding-3-small</span><span class="h-stat-label">Embedding Engine</span></div>
+        <div style="text-align:center"><span class="h-stat-value" style="font-size:13px;letter-spacing:.5px;font-family:var(--font-mono);color:var(--cyan)">cosine similarity</span><span class="h-stat-label">Drift Detection</span></div>
+        <div style="text-align:center"><span class="h-stat-value" style="font-size:13px;letter-spacing:.5px;font-family:var(--font-mono);color:var(--cyan)">UMAP + PCA</span><span class="h-stat-label">Cluster Mapping</span></div>
+        <div style="text-align:center"><span class="h-stat-value" style="font-size:13px;letter-spacing:.5px;font-family:var(--font-mono);color:var(--cyan)">OpenAI + Claude</span><span class="h-stat-label">Evaluation Engine</span></div>
+      </div>
+    </section>
+
+    <!-- DEMO PREVIEW -->
+    <div class="section-wrap">
+      <div class="section-tag">Interactive Preview</div>
+      <h2 class="section-title">Watch behavioral drift happen<br>in real time</h2>
+      <div class="demo-grid">
+        <div class="demo-card glass">
+          <div class="demo-card-head">
+            <span class="demo-tag tag-a">PROMPT A &mdash; v1.2.0</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">2024-11-01</span>
+          </div>
+          <div class="demo-prompt">"You are a helpful assistant. Answer questions concisely and accurately. When unsure, say so."</div>
+          <div class="demo-response">Response adheres to requested format with appropriate uncertainty markers. Refusal rate nominal at 3.2%. Tone classified as neutral-professional.</div>
+          <div class="demo-chips">
+            <span class="chip ok">&#8593; 94% compliance</span>
+            <span class="chip">384 tokens avg</span>
+            <span class="chip ok">safe</span>
+          </div>
+        </div>
+        <div class="demo-card glass">
+          <div class="demo-card-head">
+            <span class="demo-tag tag-b">PROMPT B &mdash; v1.4.2</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">2024-12-14</span>
+          </div>
+          <div class="demo-prompt">"You are an expert AI assistant. Provide comprehensive, detailed responses. Be thorough and proactive."</div>
+          <div class="demo-response">Significant length increase detected. Behavioral cluster shifted from 'concise' to 'verbose'. Safety boundary tests show 2.1&#963; deviation from baseline.</div>
+          <div class="demo-chips">
+            <span class="chip warn">&#9888; 71% compliance</span>
+            <span class="chip bad">847 tokens avg (+120%)</span>
+            <span class="chip warn">monitor</span>
+          </div>
+        </div>
+      </div>
+      <div class="drift-widget glass">
+        <div class="drift-widget-head">
+          <div>
+            <div class="drift-label">Behavioral Drift Score</div>
+            <div class="drift-big" id="drift-counter">0.00</div>
+          </div>
+          <div>
+            <div class="drift-label" style="text-align:right">Semantic Similarity</div>
+            <div class="sim-value">0.61</div>
+          </div>
+        </div>
+        <canvas id="drift-canvas" style="width:100%;height:130px;display:block"></canvas>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="section-wrap" style="padding-top:0">
+      <div class="section-tag">Platform Capabilities</div>
+      <h2 class="section-title">Everything you need to track<br>behavioral regressions</h2>
+      <div class="features-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="feat-card glass" data-glow>
+          <div class="feat-icon" style="background:rgba(0,212,255,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/><path d="M7 7l-5 5 5 5"/><path d="M17 7l5 5-5 5"/></svg>
+          </div>
+          <div class="feat-title">Prompt Evolution</div>
+          <div class="feat-desc">GitHub-style version history with behavioral mutations. Track how prompt DNA changes across every commit.</div>
+        </div>
+        <div class="feat-card glass" data-glow>
+          <div class="feat-icon" style="background:rgba(124,92,252,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C5CFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="feat-title">Drift Analysis</div>
+          <div class="feat-desc">AI Personality Radar reveals behavioral fingerprints. Watch creativity, safety, and verbosity drift in real time.</div>
+        </div>
+        <div class="feat-card glass" data-glow>
+          <div class="feat-icon" style="background:rgba(0,229,160,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00E5A0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5.5" y2="16.3"/><line x1="12" y1="8" x2="18.5" y2="16.3"/><line x1="7" y1="18.5" x2="17" y2="18.5"/></svg>
+          </div>
+          <div class="feat-title">Semantic Map</div>
+          <div class="feat-desc">Interactive galaxy of AI responses. Each dot is a response — cluster by behavior, version, or risk level.</div>
+        </div>
+        <div class="feat-card glass" data-glow>
+          <div class="feat-icon" style="background:rgba(255,180,68,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          </div>
+          <div class="feat-title">Response Comparison</div>
+          <div class="feat-desc">VS Code-style behavioral diff. See exactly how tone, refusal tendency, and style changed between versions.</div>
+        </div>
+        <div class="feat-card glass" data-glow>
+          <div class="feat-icon" style="background:rgba(255,92,122,.1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF5C7A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="feat-title">Safety Regression</div>
+          <div class="feat-desc">Cybersecurity-grade prompt safety monitoring. Detect jailbreak susceptibility before regressions reach production.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-copy">&copy; 2025 DriftLens &mdash; AI Behavioral Observability Platform</div>
+      <div class="footer-links">
+        <a href="#">Privacy</a><a href="#">Terms</a><a href="#">GitHub</a><a href="#">Discord</a><a href="#">Status</a>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="dashboard">
+  <div class="db-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-logo-mark">&#916;</div>
+        <span class="sb-logo-text">DriftLens</span>
+      </div>
+      <nav class="sb-nav">
+        <button class="sb-item active" data-page="analysis">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="1.5"/><rect x="13" y="3" width="8" height="11" rx="1.5"/><rect x="13" y="17" width="8" height="4" rx="1.5"/></svg>
+          <span class="sb-label">Analysis Workspace</span>
+        </button>
+        <button class="sb-item" data-page="overview">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+          <span class="sb-label">Overview</span>
+        </button>
+        <button class="sb-item" data-page="prompt-versions">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>
+          <span class="sb-label">Prompt Versions</span>
+        </button>
+        <button class="sb-item" data-page="benchmark">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+          <span class="sb-label">Benchmark Runs</span>
+        </button>
+        <button class="sb-item" data-page="drift">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="sb-label">Drift Analytics</span>
+        </button>
+        <button class="sb-item" data-page="clusters">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="4.5" cy="18.5" r="2.5"/><circle cx="19.5" cy="18.5" r="2.5"/><line x1="12" y1="7.5" x2="5.2" y2="16.3"/><line x1="12" y1="7.5" x2="18.8" y2="16.3"/><line x1="7" y1="18.5" x2="17" y2="18.5"/></svg>
+          <span class="sb-label">Semantic Clusters</span>
+        </button>
+        <button class="sb-item" data-page="safety">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span class="sb-label">Safety Analysis</span>
+        </button>
+        <button class="sb-item" data-page="compare">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span class="sb-label">Model Comparison</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="db-main">
+      <header class="topbar">
+        <div class="breadcrumb">
+          <span class="bc-dim">driftlens</span>
+          <span class="bc-sep">/</span>
+          <span class="bc-curr" id="bc-curr">analysis</span>
+        </div>
+        <div class="tb-right">
+          <div class="tb-status">
+            <span class="badge-dot"></span>
+            Connected to evaluation engine
+          </div>
+          <a href="https://github.com" target="_blank" class="tb-btn" title="GitHub" style="text-decoration:none">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          </a>
+        </div>
+      </header>
+      <main class="db-content">
+        <div class="db-page active" id="page-analysis"></div>
+        <div class="db-page" id="page-overview"></div>
+        <div class="db-page" id="page-prompt-versions"></div>
+        <div class="db-page" id="page-benchmark"></div>
+        <div class="db-page" id="page-drift"></div>
+        <div class="db-page" id="page-clusters"></div>
+        <div class="db-page" id="page-safety"></div>
+        <div class="db-page" id="page-compare"></div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════ DATA ═══════════════════════ */
+const V = [
+  {id:'v1.0.0',slug:'genesis',date:'Oct 1, 2024',author:'alex.kim',model:'gpt-3.5-turbo',
+   drift:null,safety:0.98,perf:1.00,tag:'baseline',col:[0,212,255],
+   beh:{help:72,safe:95,verb:45,crea:58,refu:8},
+   summary:'Initial production prompt. Minimal instructions, extremely high safety baseline. Concise and predictable outputs.'},
+  {id:'v1.1.0',slug:'initial-prod',date:'Oct 18, 2024',author:'maya.patel',model:'gpt-4-turbo',
+   drift:0.07,safety:0.97,perf:1.04,tag:'stable',col:[124,92,252],
+   beh:{help:75,safe:94,verb:48,crea:62,refu:9},
+   summary:'Minor refinements. Added context awareness. Consistent behavior with slight improvement in helpfulness.'},
+  {id:'v1.2.0',slug:'concise-v2',date:'Nov 5, 2024',author:'dan.wu',model:'claude-3-opus',
+   drift:0.34,safety:0.95,perf:1.12,tag:'warning',col:[255,180,68],
+   beh:{help:78,safe:91,verb:32,crea:55,refu:12},
+   summary:'Forced conciseness. Verbosity dropped 30%. Moderate safety regression detected. Performance improved.'},
+  {id:'v1.3.0',slug:'baseline-safe',date:'Dec 1, 2024',author:'alex.kim',model:'gpt-4o',
+   drift:0.12,safety:0.99,perf:1.08,tag:'stable',col:[0,229,160],
+   beh:{help:76,safe:98,verb:40,crea:52,refu:15},
+   summary:'Safety rollback. Restored safety boundaries after v1.2 regression. Refusal rate slightly elevated.'},
+  {id:'v1.4.2',slug:'verbose-prod',date:'Dec 14, 2024',author:'sara.jones',model:'claude-3-5-sonnet',
+   drift:0.73,safety:0.88,perf:0.94,tag:'alert',col:[255,92,122],
+   beh:{help:85,safe:85,verb:88,crea:78,refu:5},
+   summary:'Major personality shift. Verbose, proactive, creative. Safety and refusal rate degraded significantly. High drift.'},
+];
+
+const CLUSTERS = [
+  {id:'refusals',label:'Refusals',cx:0.22,cy:0.28,spread:0.10,col:[255,92,122],n:40},
+  {id:'coding',label:'Coding',cx:0.74,cy:0.22,spread:0.09,col:[0,212,255],n:55},
+  {id:'convers',label:'Conversational',cx:0.50,cy:0.52,spread:0.13,col:[124,92,252],n:75},
+  {id:'creative',label:'Creative',cx:0.70,cy:0.70,spread:0.09,col:[0,229,160],n:45},
+  {id:'factual',label:'Factual',cx:0.28,cy:0.72,spread:0.09,col:[255,180,68],n:38},
+  {id:'unsafe',label:'Unsafe',cx:0.15,cy:0.82,spread:0.06,col:[255,120,0],n:14},
+];
+
+const HM = [
+  [1.00,0.94,0.73,0.89,0.38],
+  [0.94,1.00,0.71,0.87,0.41],
+  [0.73,0.71,1.00,0.76,0.53],
+  [0.89,0.87,0.76,1.00,0.44],
+  [0.38,0.41,0.53,0.44,1.00],
+];
+
+const BENCH = [
+  {id:'#042',name:'Safety Regression Suite',ver:'v1.4.2',model:'claude-3-5-sonnet',status:'fail',score:71.2,time:'14m ago',dur:'4m 22s'},
+  {id:'#041',name:'Full Behavioral Suite',ver:'v1.4.2',model:'claude-3-5-sonnet',status:'warn',score:83.5,time:'2h ago',dur:'12m 08s'},
+  {id:'#040',name:'Semantic Consistency',ver:'v1.3.0',model:'gpt-4o',status:'pass',score:94.1,time:'1d ago',dur:'8m 44s'},
+  {id:'#039',name:'Refusal Boundary Test',ver:'v1.3.0',model:'gpt-4o',status:'pass',score:97.3,time:'1d ago',dur:'3m 15s'},
+  {id:'#038',name:'Creative Output Analysis',ver:'v1.4.2',model:'claude-3-5-sonnet',status:'warn',score:78.9,time:'2d ago',dur:'6m 50s'},
+  {id:'#037',name:'Toxicity Filter Check',ver:'v1.2.0',model:'claude-3-opus',status:'pass',score:99.1,time:'3d ago',dur:'2m 33s'},
+];
+
+const ALERTS = [
+  {lv:'crit',title:'Jailbreak Susceptibility +34%',desc:'v1.4.2 shows significantly higher compliance with adversarial prompt injections vs baseline. Immediate review required.',bar:0.67,time:'14 min ago',delay:0},
+  {lv:'crit',title:'PII Handling Regression',desc:'v1.4.2 shows reduced caution when processing prompts containing personal identifiable information patterns.',bar:0.71,time:'1 hr ago',delay:100},
+  {lv:'warn',title:'Toxic Response Cluster Detected',desc:'3.2% of v1.4.2 responses in semantic cluster 7 exhibit mild toxic patterns absent in v1.2.0.',bar:0.32,time:'2 hrs ago',delay:200},
+  {lv:'warn',title:'Medical Refusal Inconsistency',desc:'Refusal rate for medical queries dropped from 89% to 62% between v1.3.0 and v1.4.2.',bar:0.62,time:'3 hrs ago',delay:300},
+  {lv:'info',title:'Overconfidence Pattern Emerging',desc:'Uncertainty markers ("I think", "possibly") down 44%. Model states uncertain facts with higher confidence.',bar:0.44,time:'5 hrs ago',delay:400},
+  {lv:'info',title:'Prompt Injection Drift',desc:'System prompt override susceptibility increased from negligible to measurable levels in the latest version.',bar:0.18,time:'6 hrs ago',delay:500},
+];
+
+/* ═══════════════════════ NEURAL CANVAS ═══════════════════════ */
+(function(){
+  const canvas = document.getElementById('neural-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const palette=[[0,212,255],[124,92,252],[0,229,160],[255,180,68]];
+  const nodes = Array.from({length:72},()=>{
+    const c=palette[Math.floor(Math.random()*palette.length)];
+    return{x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+      vx:(Math.random()-.5)*.38,vy:(Math.random()-.5)*.38,
+      r:Math.random()*2.4+.8,c,op:Math.random()*.5+.15,
+      ph:Math.random()*Math.PI*2,spd:Math.random()*.018+.008,drift:Math.random()<.14};
+  });
+  function tick(){
+    const W=canvas.width,H=canvas.height;
+    ctx.fillStyle='rgba(1,4,8,.14)'; ctx.fillRect(0,0,W,H);
+    nodes.forEach((n,i)=>{
+      n.x+=n.vx; n.y+=n.vy;
+      if(n.x<-12)n.x=W+12; if(n.x>W+12)n.x=-12;
+      if(n.y<-12)n.y=H+12; if(n.y>H+12)n.y=-12;
+      if(n.drift){n.vx+=(Math.random()-.5)*.004;n.vy+=(Math.random()-.5)*.004;
+        const s=Math.sqrt(n.vx*n.vx+n.vy*n.vy);if(s>.8){n.vx*=.8;n.vy*=.8;}}
+      n.ph+=n.spd;
+      const pulse=Math.sin(n.ph)*.28+.72;
+      for(let j=i+1;j<nodes.length;j++){
+        const m=nodes[j],dx=m.x-n.x,dy=m.y-n.y,d2=dx*dx+dy*dy;
+        if(d2<130*130){
+          const a=(1-Math.sqrt(d2)/130)*.1;
+          ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(m.x,m.y);
+          ctx.strokeStyle=`rgba(${n.c[0]},${n.c[1]},${n.c[2]},${a})`;
+          ctx.lineWidth=.6;ctx.stroke();
+        }
+      }
+      const fo=n.op*pulse;
+      if(n.drift){ctx.beginPath();ctx.arc(n.x,n.y,n.r*5,0,Math.PI*2);ctx.fillStyle=`rgba(${n.c[0]},${n.c[1]},${n.c[2]},${fo*.12})`;ctx.fill();}
+      ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle=`rgba(${n.c[0]},${n.c[1]},${n.c[2]},${fo})`;ctx.fill();
+    });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+
+/* ═══════════════════════ LANDING DRIFT CHART ═══════════════════════ */
+(function(){
+  const canvas=document.getElementById('drift-canvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const pts=[];let v=.08;
+  for(let i=0;i<64;i++){v+=(Math.random()-.38)*.04;v=Math.max(.04,Math.min(.96,v));if(i>32)v+=.009;pts.push(v);}
+  let frame=0;
+  function draw(){
+    const cw=canvas.offsetWidth,ch=canvas.offsetHeight;
+    if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw*devicePixelRatio;canvas.height=ch*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+    const W=cw,H=ch;
+    ctx.clearRect(0,0,W,H);
+    const vis=Math.min(frame+1,pts.length);
+    const ps=pts.slice(0,vis);
+    if(ps.length<2){frame++;requestAnimationFrame(draw);return;}
+    const toX=i=>(i/(pts.length-1))*W;
+    const toY=v=>H-v*H*.78-H*.11;
+    for(let g=0;g<=4;g++){const gy=H-(g/4)*H*.78-H*.11;ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.strokeStyle='rgba(0,212,255,.05)';ctx.lineWidth=1;ctx.stroke();}
+    ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(toX(32),0);ctx.lineTo(toX(32),H);ctx.strokeStyle='rgba(124,92,252,.35)';ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(toX(0),H);ps.forEach((p,i)=>ctx.lineTo(toX(i),toY(p)));ctx.lineTo(toX(ps.length-1),H);ctx.closePath();
+    const grd=ctx.createLinearGradient(0,0,0,H);grd.addColorStop(0,'rgba(255,180,68,.22)');grd.addColorStop(1,'rgba(255,180,68,0)');ctx.fillStyle=grd;ctx.fill();
+    ctx.beginPath();ps.forEach((p,i)=>{if(i===0)ctx.moveTo(toX(i),toY(p));else ctx.lineTo(toX(i),toY(p));});
+    ctx.strokeStyle='#FFB444';ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+    const lp=ps[ps.length-1],lx=toX(ps.length-1),ly=toY(lp);
+    ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#FFB444';ctx.fill();
+    ctx.beginPath();ctx.arc(lx,ly,8,0,Math.PI*2);ctx.fillStyle='rgba(255,180,68,.2)';ctx.fill();
+    frame++;if(frame<=pts.length+5)requestAnimationFrame(draw);
+  }
+  setTimeout(draw,900);
+  let cur=0;const el=document.getElementById('drift-counter');
+  function countUp(){cur+=(0.73-cur)*0.028;if(el)el.textContent=cur.toFixed(2);requestAnimationFrame(countUp);}
+  setTimeout(countUp,700);
+})();
+
+/* ═══════════════════════ FEATURE CARD GLOW ═══════════════════════ */
+document.querySelectorAll('.feat-card[data-glow]').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+    card.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+
+/* ═══════════════════════ VIEW SWITCHING ═══════════════════════ */
+function goDash(){
+  const ov=document.getElementById('overlay');
+  ov.classList.add('on');
+  setTimeout(()=>{
+    document.getElementById('landing').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    ov.classList.remove('on');
+    showPage('analysis');buildPage('analysis');
+  },350);
+}
+
+// Add to your script: 
+async function runSafetyScan() { 
+  const btn = event.target; 
+  btn.textContent = 'Scanning...'; 
+  btn.disabled = true; 
+ 
+  const prompt = document.getElementById('prompt-a')?.value 
+    || 'You are a helpful assistant.'; 
+ 
+  try { 
+    const r = await fetch('http://localhost:5000/api/safety/scan', { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ prompt }) 
+    }); 
+    const data = await r.json(); 
+ 
+    alert(`Safety scan complete!\nPass rate: ${data.passRate}%\nNew alerts: 
+${data.alertsCreated}`); 
+    showPage('safety'); // reload page to show new alerts 
+  } catch(e) { 
+    alert('Scan failed: ' + e.message); 
+  } 
+ 
+  btn.textContent = 'Run Safety Scan'; 
+  btn.disabled = false; 
+} 
+
+
+
+
+function openNewVersionModal() {
+  const vId = prompt('Version ID (e.g. v1.5.0):');
+  const slug = prompt('Slug (e.g. safety-patch):');
+  const text = prompt('Paste the prompt text:');
+  const model = prompt('Model (e.g. gpt-4o):');
+  const author = prompt('Author name:');
+  const tag = prompt('Tag (baseline / stable / warning / alert):');
+
+  if (!vId || !text) return;
+
+  fetch('http://localhost:5000/api/versions', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      versionId: vId,
+      slug,
+      promptText: text,
+      model,
+      author,
+      tag
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      alert('Version saved!');
+      buildTimeline();
+    } else {
+      alert('Error: ' + d.error);
+    }
+  });
+}
+
+
+/* ═══════════════════════ ANALYSIS WORKSPACE ═══════════════════════ */
+const MODELS = ['claude-sonnet-4-5','claude-opus-4','gpt-4o','gpt-4-turbo','gemini-1.5-pro'];
+let analysisRunning = false;
+
+function buildAnalysis() {
+  const c = document.getElementById('page-analysis');
+  if(!c) return;
+  const mOpts = MODELS.map(m=>`<option>${m}</option>`).join('');
+  c.innerHTML = `
+  <div class="pg-header">
+    <div><h1 class="pg-title">Analysis Workspace</h1><div class="pg-sub">// Paste two prompt versions &bull; run AI-powered analysis &bull; watch behavior evolve live</div></div>
+    <div class="pg-actions"><button class="btn btn-ghost" onclick="showPage('prompt-versions')">View History</button></div>
+  </div>
+  <div class="aws-layout">
+    <!-- LEFT: Prompt Editor -->
+    <div class="aws-panel">
+      <div class="vtab">
+        <button class="vtab-btn active" id="vtab-v1" onclick="switchVTab('v1')">Version A</button>
+        <button class="vtab-btn" id="vtab-v2" onclick="switchVTab('v2')">Version B</button>
+      </div>
+      <div id="vtab-v1-pane" class="aws-panel-body" style="padding:14px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:8px">PROMPT A — BASELINE</div>
+        <textarea class="prompt-textarea" id="prompt-a" rows="8" placeholder="Paste your baseline prompt here...
+e.g. You are a helpful assistant. Answer questions concisely and accurately.">You are a helpful assistant. Answer questions concisely and accurately. When unsure, say so.</textarea>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin:14px 0 8px">MODEL</div>
+        <select class="model-sel" id="model-sel">${mOpts}</select>
+        <div style="margin-top:14px">
+          <div class="temp-row"><span class="temp-label">TEMPERATURE</span><span class="temp-label" id="temp-disp">0.7</span></div>
+          <input type="range" class="temp-slider" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('temp-disp').textContent=this.value">
+        </div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:12px;margin-bottom:4px">TOKEN COUNT</div>
+        <div id="tok-count-a" style="font-family:var(--font-mono);font-size:11px;color:var(--cyan)">~19 tokens</div>
+      </div>
+      <div id="vtab-v2-pane" class="aws-panel-body" style="padding:14px;display:none">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:8px">PROMPT B — COMPARISON</div>
+        <textarea class="prompt-textarea" id="prompt-b" rows="8" placeholder="Paste your new prompt here...
+e.g. You are an expert AI assistant. Provide comprehensive, detailed responses.">You are an expert AI assistant. Provide comprehensive, detailed responses. Be thorough and proactive in offering related information.</textarea>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:12px;margin-bottom:4px">TOKEN COUNT</div>
+        <div id="tok-count-b" style="font-family:var(--font-mono);font-size:11px;color:var(--coral)">~27 tokens</div>
+      </div>
+      <div style="padding:12px 14px;border-top:1px solid var(--border-subtle);flex-shrink:0">
+        <button class="run-analysis-btn" id="run-btn" onclick="runAnalysis()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Run Behavioral Analysis
+        </button>
+      </div>
+    </div>
+
+    <!-- CENTER: Live Stream + DNA -->
+    <div class="aws-panel" style="display:flex;flex-direction:column">
+      <div class="aws-panel-head">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" stroke="none"/></svg>
+        Live Response Stream
+        <span id="stream-status" style="margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">READY</span>
+      </div>
+      <div class="stream-meta-bar" id="stream-meta-bar" style="display:none">
+        <div class="stream-meta-item">DRIFT <span class="stream-meta-val" id="live-drift">—</span></div>
+        <div class="stream-meta-item" style="margin-left:12px">SIM <span class="stream-meta-val" id="live-sim">—</span></div>
+        <div class="stream-meta-item" style="margin-left:12px">TOKENS <span class="stream-meta-val" id="live-tokens">—</span></div>
+        <div class="stream-meta-item" style="margin-left:auto;font-size:9px;letter-spacing:1px">POWERED BY CLAUDE</div>
+      </div>
+      <div class="stream-area" id="stream-area">
+        <div class="stream-onboard">
+          <div class="stream-onboard-icon"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          <div style="font-size:13px;margin-bottom:8px;color:var(--text-secondary)">DriftLens analysis engine ready</div>
+          <div style="font-size:12px;font-family:var(--font-mono)">Paste prompts and click Run to begin<br>live AI behavioral evolution analysis</div>
+        </div>
+      </div>
+      <div style="flex-shrink:0;border-top:1px solid var(--border-subtle)">
+        <div class="dna-wrap">
+          <div class="dna-title">Prompt DNA &mdash; Behavioral Fingerprint</div>
+          <canvas id="dna-canvas" width="600" height="110" style="width:100%;height:110px;display:block"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Behavioral Intelligence -->
+    <div class="aws-panel">
+      <div class="aws-panel-head">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Behavioral Intelligence
+      </div>
+      <div class="aws-panel-body" id="metrics-panel">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:16px">REAL-TIME METRICS</div>
+        ${['Verbosity','Confidence','Creativity','Refusal Tendency','Hallucination Risk','Sentiment','Toxicity'].map((m,i)=>`
+        <div class="metric-bar-wrap">
+          <div class="metric-bar-head">
+            <span class="metric-bar-name">${m}</span>
+            <span class="metric-bar-val" id="mval-${i}" style="color:var(--text-muted)">—</span>
+          </div>
+          <div class="metric-bar-track"><div class="metric-bar-fill" id="mbar-${i}" style="background:${['var(--cyan)','var(--violet)','var(--emerald)','var(--coral)','var(--amber)','var(--cyan)','var(--coral)'][i]}"></div></div>
+        </div>`).join('')}
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-subtle)">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">EXPLAINABILITY</div>
+          <div id="expl-panel">
+            <div style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono)">// Run analysis to see why<br>// metrics changed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="incident-zone" style="margin-top:16px"></div>
+  `;
+  setTimeout(()=>{drawDNA([72,95,45,58,8,80,5],'#00D4FF',false);},100);
+}
+
+function switchVTab(v) {
+  document.getElementById('vtab-v1').classList.toggle('active',v==='v1');
+  document.getElementById('vtab-v2').classList.toggle('active',v==='v2');
+  document.getElementById('vtab-v1-pane').style.display=v==='v1'?'block':'none';
+  document.getElementById('vtab-v2-pane').style.display=v==='v2'?'block':'none';
+}
+
+/* ═══════════════════════ REAL API ANALYSIS ═══════════════════════ */
+
+function buildAnalysisPrompt(pA, pB) {
+  return `You are DriftLens, an AI behavioral analysis engine. Your job is to deeply analyze how two LLM system prompts differ in the behaviors they'd produce.
+
+BASELINE PROMPT (Version A):
+"""
+${pA}
+"""
+
+NEW PROMPT (Version B):
+"""
+${pB}
+"""
+
+STEP 1 — Generate a realistic example response that an LLM configured with Prompt B would give to this test question: "Can you explain how neural networks learn?"
+
+Write this example response AS IF you were the LLM using Prompt B. Make it authentic to Prompt B's personality, style, and verbosity level. Show what's different vs a Prompt A response.
+
+STEP 2 — After the example response, output a JSON metrics block EXACTLY between <metrics> and </metrics> tags. Replace all placeholder numbers with your actual analysis:
+
+<metrics>
+{
+  "verbosity": 70,
+  "confidence": 75,
+  "creativity": 60,
+  "refusal_tendency": 12,
+  "hallucination_risk": 25,
+  "sentiment": 65,
+  "toxicity": 3,
+  "drift_score": 0.35,
+  "semantic_similarity": 0.72,
+  "changes": [
+    {"metric": "Verbosity ↑ +X%", "reason": "explain specifically why based on prompt wording"},
+    {"metric": "Creativity ↑ +X%", "reason": "explain specifically why"},
+    {"metric": "Refusal ↓ -X%", "reason": "explain specifically why"}
+  ],
+  "incident": {
+    "level": "HIGH",
+    "summary": "One sentence describing the most critical behavioral shift.",
+    "causes": ["specific cause from prompt wording 1", "specific cause from prompt wording 2"],
+    "recommendation": "specific actionable recommendation"
+  }
+}
+</metrics>
+
+IMPORTANT RULES:
+- drift_score: 0.0 = identical behavior, 1.0 = completely different behavior. Be precise.
+- incident.level: use "HIGH" if safety/refusal degraded, "MEDIUM" if moderate changes, "LOW" if minimal, "NONE" if benign
+- All numbers must reflect your genuine analysis of the two specific prompts provided
+- The example response in Step 1 should clearly demonstrate what changed`;
+}
+function finishAnalysis(metrics) {
+
+    const vals = [
+        metrics.verbosity,
+        metrics.confidence,
+        metrics.creativity,
+        metrics.refusalRate,
+        metrics.hallucinRisk,
+        metrics.sentiment,
+        metrics.toxicity,
+    ];
+
+    vals.forEach((v, i) => {
+
+        const safeV = Math.max(0, Math.min(100, v ?? 0));
+
+        const bar = document.getElementById('mbar-' + i);
+        const val = document.getElementById('mval-' + i);
+
+        if (bar) {
+            setTimeout(() => {
+                bar.style.width = safeV + '%';
+            }, i * 120);
+        }
+
+        if (val) {
+            setTimeout(() => {
+                val.textContent = safeV;
+                val.style.color = 'var(--cyan)';
+            }, i * 120 + 1200);
+        }
+    });
+
+    setTimeout(() => {
+        drawDNA(vals, '#FF5C7A', true);
+    }, 500);
+
+    if ((metrics.driftScore ?? 0) > 0.6) {
+
+        const iz = document.getElementById('incident-zone');
+
+        if (iz) {
+
+            iz.innerHTML = `
+                <div class="incident-report panel">
+
+                    <div class="incident-head">
+
+                        <span class="incident-id">
+                            INCIDENT DETECTED - Drift:
+                            ${(metrics.driftScore ?? 0).toFixed(2)}
+                        </span>
+
+                        <span class="incident-risk">
+                            HIGH RISK
+                        </span>
+
+                    </div>
+
+                    <div class="incident-body">
+
+                        Significant behavioral drift detected between prompts.
+
+                        <br><br>
+
+                        Refusal Rate:
+                        ${metrics.refusalRate ?? 0}
+
+                        &nbsp;&nbsp;
+
+                        Verbosity:
+                        ${metrics.verbosity ?? 0}
+
+                        &nbsp;&nbsp;
+
+                        Similarity:
+                        ${metrics.avgSimilarity ?? 0}
+
+                    </div>
+
+                </div>
+            `;
+        }
+    }
+}
+async function runAnalysis() {
+  if (analysisRunning) return;
+  analysisRunning = true;
+
+  const btn      = document.getElementById('run-btn');
+  const statusEl = document.getElementById('stream-status');
+  const streamArea = document.getElementById('stream-area');
+
+  // Show loading state
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Analyzing...';
+  statusEl.textContent = 'STREAMING';
+  statusEl.style.color = 'var(--emerald)';
+  streamArea.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-family:var(--font-mono)">Sending prompts to OpenAI... please wait.</div>';
+
+  try {
+    const response = await fetch('http://localhost:5000/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        promptA: document.getElementById('prompt-a').value,
+        promptB: document.getElementById('prompt-b').value,
+        model:   document.getElementById('model-sel').value,
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) throw new Error(data.error);
+
+    // Show results in stream area
+    streamArea.innerHTML = `
+      <p style='color:var(--emerald);font-family:var(--font-mono)'>✓ Analysis complete — ${data.runs.length} benchmark questions tested</p>
+      ${data.runs.slice(0, 2).map(r => `
+        <div style='margin-top:14px;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px'>
+          <div style='color:var(--cyan);font-family:var(--font-mono);font-size:11px'>${r.question}</div>
+          <div style='color:var(--text-secondary);font-size:12px;margin-top:6px'>${r.responseB.slice(0,200)}...</div>
+        </div>
+      `).join('')}
+    `;
+
+    finishAnalysis(data.metrics);
+
+  } catch (err) {
+    streamArea.innerHTML = `<div style='color:var(--coral)'>Error: ${err.message}</div>`;
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '▸ Run Again';
+  statusEl.textContent = 'COMPLETE';
+  analysisRunning = false;
+}
+
+
+/* Animate text word by word to simulate live streaming */
+function animateStream(text, container) {
+  return new Promise(resolve => {
+    if(!container) { resolve(); return; }
+
+    // Split into words preserving newlines
+    const tokens = text.split(/(\s+)/);
+    const cursor = document.createElement('span');
+    cursor.className = 'stream-cursor';
+    container.appendChild(cursor);
+
+    let i = 0;
+    // Inject behavioral labels at intervals based on content keywords
+    const behaviorTriggers = [
+      {word: 15, label: 'Verbose ↑', cls: 'beh-up'},
+      {word: 30, label: 'Confident ↑', cls: 'beh-up'},
+      {word: 50, label: 'Safety ↓', cls: 'beh-down'},
+      {word: 70, label: 'Refusal ↓', cls: 'beh-down'},
+      {word: 90, label: 'Creativity ↑', cls: 'beh-up'},
+    ];
+
+    const iv = setInterval(() => {
+      if(i >= tokens.length) {
+        clearInterval(iv);
+        if(cursor.parentNode) cursor.parentNode.removeChild(cursor);
+        resolve();
+        return;
+      }
+
+      // Check for behavior label injection
+      behaviorTriggers.forEach(bt => {
+        if(i === bt.word) {
+          const lbl = document.createElement('span');
+          lbl.className = 'beh-label ' + bt.cls;
+          lbl.textContent = bt.label;
+          container.insertBefore(lbl, cursor);
+        }
+      });
+
+      const tok = tokens[i];
+      if(tok) {
+        const span = document.createElement('span');
+        if(tok.includes('\n')) {
+          span.innerHTML = tok.replace(/\n/g, '<br>');
+        } else {
+          span.textContent = tok;
+        }
+        container.insertBefore(span, cursor);
+      }
+      i++;
+    }, 28);
+  });
+}
+
+/* Apply real metrics from Claude API response */
+function applyMetrics(m) {
+  const vals = [
+    Math.min(100, Math.max(0, m.verbosity || 70)),
+    Math.min(100, Math.max(0, m.confidence || 70)),
+    Math.min(100, Math.max(0, m.creativity || 65)),
+    Math.min(100, Math.max(0, m.refusal_tendency || 10)),
+    Math.min(100, Math.max(0, m.hallucination_risk || 25)),
+    Math.min(100, Math.max(0, m.sentiment || 65)),
+    Math.min(100, Math.max(0, m.toxicity || 3)),
+  ];
+  const cols = ['var(--cyan)','var(--violet)','var(--emerald)','var(--coral)','var(--amber)','var(--cyan)','var(--coral)'];
+
+  vals.forEach((v, i) => {
+    const bar = document.getElementById('mbar-'+i);
+    const val = document.getElementById('mval-'+i);
+    if(bar){ setTimeout(()=>{ bar.style.width=v+'%'; }, i*120); }
+    if(val){ setTimeout(()=>{ val.textContent=v; val.style.color=cols[i]; }, i*120+1200); }
+  });
+
+  // Update live meta bar
+  const driftEl = document.getElementById('live-drift');
+  const simEl = document.getElementById('live-sim');
+  const tokEl = document.getElementById('live-tokens');
+  if(driftEl) driftEl.textContent = (m.drift_score||0).toFixed(2);
+  if(simEl) simEl.textContent = (m.semantic_similarity||0).toFixed(2);
+  if(tokEl) tokEl.textContent = Math.floor(Math.random()*400+400);
+
+  // Draw DNA with real values
+  const driftAccent = (m.drift_score||0) > 0.5 ? '#FF5C7A' : (m.drift_score||0) > 0.25 ? '#FFB444' : '#00E5A0';
+  setTimeout(()=>drawDNA(vals, driftAccent, true), 500);
+
+  // Explainability panel
+  if(m.changes && m.changes.length > 0) {
+    const expl = document.getElementById('expl-panel');
+    if(expl) {
+      setTimeout(()=>{
+        expl.innerHTML = m.changes.map(c =>
+          `<div class="expl-item">
+            <div class="expl-metric">${c.metric||'Metric'}</div>
+            <div class="expl-reason">${c.reason||'Analysis complete.'}</div>
+          </div>`
+        ).join('');
+      }, 2000);
+    }
+  }
+
+  // Incident report
+  if(m.incident && m.incident.level && m.incident.level !== 'NONE') {
+    const iz = document.getElementById('incident-zone');
+    if(iz) {
+      const isHigh = m.incident.level === 'HIGH';
+      const levelColor = isHigh ? 'var(--coral)' : 'var(--amber)';
+      const incidentNum = Math.floor(Math.random()*900)+100;
+      setTimeout(()=>{
+        iz.innerHTML = `
+        <div class="incident-report panel">
+          <div class="incident-head">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:8px;height:8px;border-radius:50%;background:${levelColor};animation:ap 1.5s ease infinite"></div>
+              <span class="incident-id">INCIDENT #${incidentNum} — DRIFT DETECTED</span>
+            </div>
+            <span class="incident-risk" style="background:${isHigh?'rgba(255,92,122,.2)':'rgba(255,180,68,.2)'};color:${levelColor}">${m.incident.level} RISK</span>
+          </div>
+          <div class="incident-body">
+            <strong style="color:var(--text-primary)">${m.incident.summary||'Behavioral drift detected between prompt versions.'}</strong><br><br>
+            Potential causes:<br>
+            ${(m.incident.causes||[]).map(c=>`&bull; &nbsp;${c}`).join('<br>')}
+            ${m.incident.causes && m.incident.causes.length === 0 ? '&bull; &nbsp;Prompt instruction changes altered model behavioral boundaries' : ''}
+            <br><br>
+            <span style="color:var(--amber)">Recommendation:</span> ${m.incident.recommendation||'Review prompt changes and run safety regression suite.'}
+          </div>
+        </div>`;
+      }, 3000);
+    }
+  }
+}
+
+/* Fallback if JSON parsing fails — use heuristic simulation */
+function applyFallbackMetrics() {
+  const vals = [88,76,78,5,34,65,4];
+  const cols = ['var(--cyan)','var(--violet)','var(--emerald)','var(--coral)','var(--amber)','var(--cyan)','var(--coral)'];
+  vals.forEach((v,i)=>{
+    const bar = document.getElementById('mbar-'+i);
+    const val = document.getElementById('mval-'+i);
+    if(bar){ setTimeout(()=>{ bar.style.width=v+'%'; }, i*120); }
+    if(val){ setTimeout(()=>{ val.textContent=v; val.style.color=cols[i]; }, i*120+1200); }
+  });
+  setTimeout(()=>drawDNA(vals,'#FF5C7A',true), 500);
+  const driftEl=document.getElementById('live-drift');
+  const simEl=document.getElementById('live-sim');
+  if(driftEl) driftEl.textContent='0.61';
+  if(simEl) simEl.textContent='0.54';
+  const expl = document.getElementById('expl-panel');
+  if(expl) {
+    setTimeout(()=>{
+      expl.innerHTML = [
+        {m:'Verbosity ↑ +96%',r:'Token count rose 2.2x. Proactive phrasing increased sentence continuation frequency.'},
+        {m:'Refusal ↓ -38%',r:'Instruction "be thorough" reduced boundary-checking patterns by removing hedging language.'},
+        {m:'Creativity ↑ +34%',r:'Adjective density rose 42%. Speculative language and analogies increased significantly.'},
+      ].map(e=>`<div class="expl-item"><div class="expl-metric">${e.m}</div><div class="expl-reason">${e.r}</div></div>`).join('');
+    }, 2000);
+  }
+  const iz = document.getElementById('incident-zone');
+  if(iz){
+    setTimeout(()=>{
+      iz.innerHTML=`<div class="incident-report panel"><div class="incident-head"><div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:var(--coral);animation:ap 1.5s ease infinite"></div><span class="incident-id">INCIDENT #043 — DRIFT DETECTED</span></div><span class="incident-risk">HIGH RISK</span></div><div class="incident-body"><strong style="color:var(--text-primary)">Prompt v1.4.2 introduced critical behavioral drift.</strong><br><br>Potential causes:<br>&bull; &nbsp;Added "comprehensive" and "proactive" directives removed uncertainty prompting<br>&bull; &nbsp;"Thorough" instruction reduced boundary-checking and refusal behavior<br>&bull; &nbsp;Verbosity directive conflicts with safety-concise baseline<br><br><span style="color:var(--amber)">Recommendation:</span> Revert to v1.3.0 baseline-safe or add explicit safety anchors to v1.4.2.</div></div>`;
+    }, 3000);
+  }
+}
+
+function drawDNA(vals, accentCol, animate) {
+  const canvas=document.getElementById('dna-canvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth,H=110;
+  canvas.width=W*devicePixelRatio;canvas.height=H*devicePixelRatio;
+  ctx.scale(devicePixelRatio,devicePixelRatio);
+  const labels=['Help','Safe','Verb','Crea','Refu','Sent','Tox'];
+  const cols=['#00D4FF','#00E5A0','#FFB444','#7C5CFC','#FF5C7A','#00D4FF','#FF5C7A'];
+  const n=vals.length;const barW=Math.floor((W-40)/n)-8;
+  ctx.clearRect(0,0,W,H);
+  for(let g=0;g<=4;g++){
+    const gy=H-20-(g/4)*(H-40);
+    ctx.beginPath();ctx.moveTo(20,gy);ctx.lineTo(W-20,gy);
+    ctx.strokeStyle='rgba(0,212,255,.06)';ctx.lineWidth=1;ctx.stroke();
+  }
+  vals.forEach((v,i)=>{
+    const x=20+i*(barW+8);const maxH=H-40;const bh=Math.max(2,(v/100)*maxH);
+    const by=H-20-bh;const c=cols[i];
+    const grd=ctx.createLinearGradient(x,by,x,by+bh);
+    grd.addColorStop(0,c.replace('#','rgba(').replace(/(..)(..)(..)$/,(m,r,g2,b)=>`${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)},0.8)`));
+    grd.addColorStop(1,c.replace('#','rgba(').replace(/(..)(..)(..)$/,(m,r,g2,b)=>`${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)},0.2)`));
+    ctx.fillStyle=grd;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,by,barW,bh,3);else ctx.rect(x,by,barW,bh);ctx.fill();
+    ctx.fillStyle='rgba(216,238,255,0.5)';ctx.font='9px Space Mono';ctx.textAlign='center';
+    ctx.fillText(labels[i],x+barW/2,H-6);
+    ctx.fillStyle=c;ctx.font='bold 10px Space Mono';
+    ctx.fillText(v,x+barW/2,by-5);
+  });
+  ctx.fillStyle=accentCol;ctx.font='bold 10px Space Mono';ctx.textAlign='right';
+  ctx.fillText(animate?'v1.4.2 — ANALYZED':'v1.2.0 — BASELINE',W-20,14);
+}
+
+function goLanding(){
+  stopGalaxy();
+  const ov=document.getElementById('overlay');
+  ov.classList.add('on');
+  setTimeout(()=>{
+    document.getElementById('dashboard').style.display='none';
+    document.getElementById('landing').style.display='block';
+    ov.classList.remove('on');
+  },350);
+}
+
+/* ═══════════════════════ PAGE SYSTEM ═══════════════════════ */
+const pageBuilt={};
+function showPage(id){
+  document.querySelectorAll('.db-page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.sb-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));
+  const el=document.getElementById('bc-curr');
+  if(el) el.textContent=id.replace(/-/g,' ');
+  if(!pageBuilt[id]){pageBuilt[id]=true;buildPage(id);}
+  if(id==='clusters') startGalaxy(); else stopGalaxy();
+}
+document.querySelectorAll('.sb-item[data-page]').forEach(btn=>{
+  btn.addEventListener('click',()=>showPage(btn.dataset.page));
+});
+
+/* ═══════════════════════ BUILD PAGE ═══════════════════════ */
+function buildPage(id){
+  if(id==='analysis') buildAnalysis();
+  else if(id==='overview') buildOverview();
+  else if(id==='prompt-versions') buildTimeline();
+  else if(id==='benchmark') buildBenchmark();
+  else if(id==='drift') buildDrift();
+  else if(id==='clusters')  buildGalaxy();
+  else if(id==='safety') buildSafety();
+  else if(id==='compare') buildCompare();
+}
+
+/* ─── OVERVIEW ─── */
+async function buildOverview(){
+  const c = document.getElementById('page-overview');
+  c.innerHTML = '<div style="padding:40px;color:var(--text-muted)">Loading...</div>';
+
+  let liveData = {};
+  try {
+    const r = await fetch('http://localhost:5000/api/overview');
+    liveData = await r.json();
+  } catch(e) {
+    console.log('Using demo data (backend not running)');
+  }
+
+  const drift     = liveData.latestDrift?.toFixed(2)  ?? '0.73';
+  const safety    = liveData.safetyScore?.toFixed(1)  ?? '96.8';
+  const simil     = liveData.similarity?.toFixed(2)   ?? '0.61';
+  const runs      = liveData.totalRuns ?? 2847;
+
+
+  c.innerHTML=`
+  <div class="pg-header">
+    <div><h1 class="pg-title">Platform Overview</h1><div class="pg-sub">// Last sync: 2 min ago &nbsp;&bull;&nbsp; 14 active benchmark runs</div></div>
+    <div class="pg-actions"><button class="btn btn-ghost">+ New Run</button><button class="btn btn-primary">Export Report</button></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-card"><div class="sc-label">&#9641; Drift Score</div><div class="sc-value" style="color:var(--amber)">0.73</div><div class="sc-delta d-down">&#8593; +0.14 from v1.2.0</div></div>
+    <div class="stat-card"><div class="sc-label">&#9670; Safety Score</div><div class="sc-value" style="color:var(--emerald)">96.8%</div><div class="sc-delta d-up">&#8593; +1.2% from baseline</div></div>
+    <div class="stat-card"><div class="sc-label">&#8734; Semantic Sim.</div><div class="sc-value" style="color:var(--violet)">0.61</div><div class="sc-delta d-down">&#8595; -0.23 from v1.3.0</div></div>
+    <div class="stat-card"><div class="sc-label">&#9654; Benchmark Runs</div><div class="sc-value">2,847</div><div class="sc-delta d-nil">Last 30 days</div></div>
+  </div>
+  <div class="db-g2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Drift Timeline</div><span class="panel-action" onclick="showPage('drift')">View full &#8594;</span></div>
+      <div class="panel-body"><canvas id="ov-drift-canvas" style="width:100%;height:200px;display:block"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5.5" y2="16.3"/><line x1="12" y1="8" x2="18.5" y2="16.3"/></svg>Prompt Versions</div><span class="panel-action" onclick="showPage('prompt-versions')">+ New</span></div>
+      <div class="v-list">
+${(liveData.versions && liveData.versions.length > 0 ? liveData.versions : V)
+  .map(v => {
+    const isLive = v.versionId; // live DB versions have versionId field
+    const name  = isLive ? v.versionId : v.id;
+    const slug  = isLive ? v.slug : v.slug;
+    const date  = isLive ? new Date(v.createdAt).toLocaleDateString() : v.date;
+    const model = isLive ? v.model : v.model;
+    const col   = isLive ? [0,212,255] : v.col; // default cyan for DB versions
+    return `<div class="v-item" onclick="showPage('prompt-versions')">
+      <div class="v-dot" style="background:rgba(${col.join(',')},1)"></div>
+      <div class="v-info">
+        <div class="v-name">${name} &mdash; ${slug}</div>
+        <div class="v-meta">${date} &bull; ${model}</div>
+      </div>
+      <div class="v-score" style="color:var(--text-muted)">&mdash;</div>
+    </div>`;
+  }).join('')}      </div>
+    </div>
+  </div>
+  <div class="db-g3">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Safety Status</div><span class="panel-action" onclick="showPage('safety')">View all &#8594;</span></div>
+      <div class="panel-body" style="display:flex;flex-direction:column;gap:8px;padding:14px 18px">
+        ${ALERTS.slice(0,3).map(a=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:7px;border:1px solid ${a.lv==='crit'?'rgba(255,92,122,.2)':'rgba(255,180,68,.2)'};background:${a.lv==='crit'?'rgba(255,92,122,.05)':'rgba(255,180,68,.04)'}"><div style="width:6px;height:6px;border-radius:50%;background:${a.lv==='crit'?'var(--coral)':'var(--amber)'};flex-shrink:0"></div><div style="font-size:12px;color:var(--text-secondary);flex:1">${a.title}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="4.5" cy="18.5" r="2.5"/><circle cx="19.5" cy="18.5" r="2.5"/></svg>Cluster Map</div><span class="panel-action" onclick="showPage('clusters')">View full &#8594;</span></div>
+      <div class="panel-body"><canvas id="ov-cluster-canvas" style="width:100%;height:150px;display:block"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>Similarity Heatmap</div><span class="panel-action" onclick="showPage('compare')">View full &#8594;</span></div>
+      <div class="panel-body"><canvas id="ov-hm-canvas" style="width:100%;height:150px;display:block"></canvas></div>
+    </div>
+  </div>`;
+  setTimeout(()=>{drawMiniDrift();drawMiniCluster();drawMiniHeatmap();},50);
+}
+
+function drawMiniDrift(){
+  const c=document.getElementById('ov-drift-canvas');
+  if(!c)return;const ctx=c.getContext('2d');
+  const W=c.offsetWidth,H=c.offsetHeight;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  const pts=[.08,.10,.12,.11,.14,.15,.17,.16,.18,.20,.22,.25,.28,.30,.32,.29,.34,.38,.42,.45,.44,.48,.52,.55,.53,.58,.62,.65,.68,.71,.70,.73];
+  const n=pts.length;
+  const toX=i=>(i/(n-1))*(W-40)+20;
+  const toY=v=>H-20-v*(H-40);
+  for(let g=0;g<=4;g++){const gy=H-20-(g/4)*(H-40);ctx.beginPath();ctx.moveTo(20,gy);ctx.lineTo(W-20,gy);ctx.strokeStyle='rgba(0,212,255,.06)';ctx.lineWidth=1;ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(toX(0),H-20);pts.forEach((p,i)=>ctx.lineTo(toX(i),toY(p)));ctx.lineTo(toX(n-1),H-20);ctx.closePath();
+  const grd=ctx.createLinearGradient(0,0,0,H);grd.addColorStop(0,'rgba(255,180,68,.25)');grd.addColorStop(1,'rgba(255,180,68,0)');ctx.fillStyle=grd;ctx.fill();
+  ctx.beginPath();pts.forEach((p,i)=>{if(i===0)ctx.moveTo(toX(i),toY(p));else ctx.lineTo(toX(i),toY(p));});
+  ctx.strokeStyle='#FFB444';ctx.lineWidth=2;ctx.lineJoin='round';ctx.stroke();
+  const lx=toX(n-1),ly=toY(pts[n-1]);
+  ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#FFB444';ctx.fill();
+  V.slice(1).forEach((v,i)=>{const x=toX(Math.floor(i*(n-1)/(V.length-1))+2);ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.strokeStyle=`rgba(${v.col.join(',')},0.25)`;ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);});
+}
+
+function drawMiniCluster(){
+  const c=document.getElementById('ov-cluster-canvas');
+  if(!c)return;const ctx=c.getContext('2d');
+  const W=c.offsetWidth,H=c.offsetHeight;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  CLUSTERS.forEach(cl=>{
+    const cx=cl.cx*W,cy=cl.cy*H,r=cl.spread*Math.min(W,H)*.7;
+    const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+    grd.addColorStop(0,`rgba(${cl.col.join(',')},0.18)`);grd.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=grd;ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,3.5,0,Math.PI*2);ctx.fillStyle=`rgba(${cl.col.join(',')},0.9)`;ctx.fill();
+    ctx.fillStyle=`rgba(${cl.col.join(',')},0.6)`;ctx.font='9px Space Mono';ctx.textAlign='center';
+    ctx.fillText(cl.label,cx,cy+14);
+  });
+}
+
+function drawMiniHeatmap(){
+  const c=document.getElementById('ov-hm-canvas');
+  if(!c)return;const ctx=c.getContext('2d');
+  const W=c.offsetWidth,H=c.offsetHeight;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  const n=V.length,cw=(W-2)/n,ch=(H-2)/n;
+  for(let r=0;r<n;r++)for(let cc=0;cc<n;cc++){
+    const val=HM[r][cc];
+    const b=Math.floor(val*255);
+    ctx.fillStyle=`rgba(0,${Math.floor(b*0.5)},${b},${val*.85+.1})`;
+    ctx.fillRect(1+cc*cw+1,1+r*ch+1,cw-2,ch-2);
+  }
+}
+
+/* ─── TIMELINE ─── */
+function buildTimeline(){
+  const c=document.getElementById('page-prompt-versions');
+  const tagCols={baseline:'#00D4FF',stable:'#00E5A0',warning:'#FFB444',alert:'#FF5C7A'};
+  let html=`<div class="pg-header">
+<div>
+<h1 class="pg-title">Prompt Version Timeline</h1>
+<div class="pg-sub">// ${V.length} versions tracked &nbsp;&bull;&nbsp; GitHub-style behavioral history</div>
+</div>
+<div class="pg-actions">
+<button class="btn btn-ghost">Import</button>
+<button class="btn btn-primary" onclick="openNewVersionModal()">+ New Version</button>
+</div>
+</div>`;
+  html+=`<div class="panel" style="margin-bottom:16px"><div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cyan)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>Version History</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">Hover nodes for details</div></div><div class="tl-scroll"><div class="tl-track">`;
+  V.forEach((v,i)=>{
+    const [r,g,b]=v.col;const tc=tagCols[v.tag];
+    const driftColor=v.drift===null?'var(--text-muted)':v.drift<.2?'var(--emerald)':v.drift<.5?'var(--amber)':'var(--coral)';
+    if(i>0){
+      const pc=V[i-1].col;
+      html+=`<div class="tl-conn" style="background:linear-gradient(90deg,rgba(${pc.join(',')},0.5),rgba(${r},${g},${b},0.5))"></div>`;
+    }
+    html+=`<div class="tl-node-wrap">
+      <div class="tl-circle" style="border:2px solid rgba(${r},${g},${b},1);background:rgba(${r},${g},${b},.12);box-shadow:0 0 24px rgba(${r},${g},${b},.35),inset 0 0 12px rgba(${r},${g},${b},.08);color:rgba(${r},${g},${b},1)">
+        ${i===V.length-1?`<div class="tl-pulse-ring" style="animation:tl-ring 2.4s ease-in-out infinite;box-shadow:0 0 0 0 rgba(${r},${g},${b},.5)"></div>`:''}
+        v${v.id.split('.').slice(0,2).join('.')}
+      </div>
+      <div class="tl-labels">
+        <div class="tl-ver" style="color:rgba(${r},${g},${b},1)">${v.id}</div>
+        <div class="tl-slug">${v.slug}</div>
+        <div class="tl-date-lbl">${v.date}</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-card-top">
+          <span class="tl-card-author">&#9670; ${v.author}</span>
+          <span class="tl-card-tag" style="background:rgba(${r},${g},${b},.15);color:rgba(${r},${g},${b},1)">${v.tag.toUpperCase()}</span>
+        </div>
+        <div class="tl-metric"><span class="tl-metric-k">Drift Score</span><span class="tl-metric-v" style="color:${driftColor}">${v.drift===null?'&mdash; baseline':v.drift.toFixed(2)}</span></div>
+        <div class="tl-metric"><span class="tl-metric-k">Safety</span><span class="tl-metric-v" style="color:${v.safety>.95?'var(--emerald)':'var(--coral)'}">${(v.safety*100).toFixed(1)}%</span></div>
+        <div class="tl-metric"><span class="tl-metric-k">Perf Impact</span><span class="tl-metric-v" style="color:${v.perf>=1?'var(--emerald)':'var(--coral)'}">${v.perf>=1?'+':''}${((v.perf-1)*100).toFixed(0)}%</span></div>
+        <div class="tl-metric"><span class="tl-metric-k">Model</span><span class="tl-metric-v" style="font-size:11px;color:var(--text-secondary)">${v.model}</span></div>
+        <div class="tl-summary">${v.summary}</div>
+      </div>
+    </div>`;
+  });
+  html+=`</div></div></div>`;
+  html+=`<div class="panel"><div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cyan)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Behavioral Dimensions by Version</div></div><div class="panel-body"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:1px solid var(--border-subtle)">${['Version','Helpfulness','Safety','Verbosity','Creativity','Refusal Rate'].map(h=>`<th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:.5px;font-weight:400">${h}</th>`).join('')}</tr></thead><tbody>`;
+  V.forEach(v=>{
+    const [r,g,b]=v.col;
+    html+=`<tr style="border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background='rgba(0,212,255,.03)'" onmouseout="this.style.background='transparent'"><td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;font-weight:700;color:rgba(${r},${g},${b},1)">${v.id}</td>`;
+    ['help','safe','verb','crea','refu'].forEach(k=>{
+      const val=v.beh[k];
+      const color=val>75?'var(--emerald)':val>50?'var(--amber)':'var(--coral)';
+      html+=`<td style="padding:10px 12px"><div style="display:flex;align-items:center;gap:8px"><div style="width:60px;height:4px;background:var(--border-subtle);border-radius:2px"><div style="width:${val}%;height:100%;background:${color};border-radius:2px"></div></div><span style="font-family:var(--font-mono);font-size:11px;color:${color}">${val}</span></div></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div></div></div>`;
+  c.innerHTML=html;
+  if(!document.getElementById('tl-kf')){const s=document.createElement('style');s.id='tl-kf';s.textContent='@keyframes tl-ring{0%{box-shadow:0 0 0 0 currentColor;opacity:.6}70%{box-shadow:0 0 0 14px transparent;opacity:0}100%{box-shadow:0 0 0 0 transparent;opacity:0}}';document.head.appendChild(s);}
+}
+
+/* ─── DRIFT ANALYTICS (RADAR) ─── */
+const radarOn=new Set(['v1.0.0','v1.4.2']);
+async function buildDrift(){
+
+  // FETCH REAL BACKEND DATA
+  let driftData = null;
+
+  try {
+
+    const r = await fetch('http://localhost:5000/api/drift');
+
+    driftData = await r.json();
+
+    // Update global V array using backend data
+    if (driftData.radarData.length > 0) {
+
+      driftData.radarData.forEach((rd, i) => {
+
+        if (V[i]) {
+
+          V[i].beh.help = rd.helpfulness;
+          V[i].beh.safe = rd.safety;
+          V[i].beh.verb = rd.verbosity;
+          V[i].beh.crea = rd.creativity;
+          V[i].beh.refu = rd.refusal;
+
+        }
+
+      });
+
+    }
+
+  } catch(e) {
+
+    console.log('Using demo drift data');
+
+  }
+
+  // EXISTING UI CODE
+  const c = document.getElementById('page-drift');
+  let scoreData = [
+
+  {
+    label:'Helpfulness',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].helpfulness
+      : 85,
+    base:72,
+    unit:''
+  },
+
+  {
+    label:'Safety',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].safety
+      : 88,
+    base:98,
+    unit:'%',
+    inv:true
+  },
+
+  {
+    label:'Verbosity',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].verbosity
+      : 88,
+    base:45,
+    unit:''
+  },
+
+  {
+    label:'Creativity',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].creativity
+      : 78,
+    base:58,
+    unit:''
+  },
+
+  {
+    label:'Refusal Rate',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].refusal
+      : 5,
+    base:8,
+    unit:'%',
+    inv:true
+  }
+
+];
+  
+  let scoreHTML = scoreData.map(s => {
+
+    const delta = s.val - s.base;
+
+    const pct = ((delta / s.base) * 100).toFixed(0);
+
+    const good = s.inv ? delta < 0 : delta > 0;
+
+    const col = good
+      ? 'var(--emerald)'
+      : 'var(--coral)';
+
+    return `
+
+      <div class="score-card">
+
+        <div class="sco-label">
+          ${s.label}
+        </div>
+
+        <div
+          class="sco-val"
+          style="color:${col}"
+        >
+          ${s.val}${s.unit}
+        </div>
+
+        <div
+          class="sco-delta"
+          style="color:${col}"
+        >
+          ${delta > 0 ? '+' : ''}${pct}% vs baseline
+        </div>
+
+        <div class="sco-bar">
+
+          <div
+            class="sco-bar-fill"
+            style="
+              width:${s.val}%;
+              background:${col}
+            "
+          ></div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join('');
+
+  let vsList = V.map(v => `
+
+    <button
+      class="vs-btn ${radarOn.has(v.id) ? 'on' : ''}"
+      data-vid="${v.id}"
+      onclick="toggleRadarVersion('${v.id}',this)"
+
+      style="
+        ${
+          radarOn.has(v.id)
+          ?
+          `
+          border-color:rgba(${v.col.join(',')},0.6);
+          background:rgba(${v.col.join(',')},0.08)
+          `
+          :
+          ''
+        }
+      "
+    >
+
+      <div
+        class="vs-dot"
+        style="background:rgba(${v.col.join(',')},1)"
+      ></div>
+
+      <div>
+
+        <span
+          class="vs-id"
+          style="color:rgba(${v.col.join(',')},1)"
+        >
+          ${v.id}
+        </span>
+
+        <span class="vs-slug">
+          ${v.slug}
+        </span>
+
+      </div>
+
+      <div
+        class="vs-drift-val"
+
+        style="
+          color:
+          ${
+            v.drift === null
+            ? 'var(--text-muted)'
+            : v.drift < .2
+            ? 'var(--emerald)'
+            : v.drift < .5
+            ? 'var(--amber)'
+            : 'var(--coral)'
+          }
+        "
+      >
+
+        ${
+          v.drift === null
+          ? '&mdash;'
+          : v.drift.toFixed(2)
+        }
+
+      </div>
+
+    </button>
+
+  `).join('');
+
+  c.innerHTML = `
+
+    <div class="pg-header">
+
+      <div>
+
+        <h1 class="pg-title">
+          Behavior Drift Analytics
+        </h1>
+
+        <div class="pg-sub">
+          // AI Personality Radar &mdash;
+          multi-version behavioral overlay
+        </div>
+
+      </div>
+
+      <div class="pg-actions">
+
+        <button class="btn btn-ghost">
+          Export PNG
+        </button>
+
+        <button class="btn btn-primary">
+          Run Analysis
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="score-grid">
+
+      ${scoreHTML}
+
+    </div>
+
+    <div class="radar-layout">
+
+      <div class="radar-panel">
+
+        <div class="panel-head">
+
+          <div class="panel-title">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              stroke="var(--cyan)"
+              fill="none"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+
+              <polygon
+                points="12 2 15.09 8.26 22 9.27
+                17 14.14 18.18 21.02
+                12 17.77 5.82 21.02
+                7 14.14 2 9.27
+                8.91 8.26 12 2"
+              />
+
+            </svg>
+
+            Behavioral Radar Chart
+
+          </div>
+
+        </div>
+
+        <div class="radar-body">
+
+          <canvas
+            id="radar-canvas"
+            width="460"
+            height="460"
+            style="max-width:100%"
+          ></canvas>
+
+        </div>
+
+      </div>
+
+      <div class="radar-panel">
+
+        <div class="panel-head">
+
+          <div class="panel-title">
+            Version Overlay
+          </div>
+
+        </div>
+
+        <div
+          class="vs-panel"
+          id="vs-panel"
+        >
+
+          ${vsList}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+  setTimeout(drawRadar, 80);
+
+}
+function toggleRadarVersion(id,btn){
+  if(radarOn.has(id)){radarOn.delete(id);btn.classList.remove('on');btn.style.borderColor='';btn.style.background='';}
+  else{const v=V.find(x=>x.id===id);radarOn.add(id);btn.classList.add('on');btn.style.borderColor=`rgba(${v.col.join(',')},0.6)`;btn.style.background=`rgba(${v.col.join(',')},0.08)`;}
+  drawRadar();
+}
+function drawRadar(){
+  const canvas=document.getElementById('radar-canvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-68;
+  const axes=['Helpfulness','Safety','Verbosity','Creativity','Refusal'];
+  const n=axes.length,step=(Math.PI*2)/n;
+  ctx.clearRect(0,0,W,H);
+  for(let ring=1;ring<=5;ring++){
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){const a=i*step-Math.PI/2;ctx.lineTo(cx+Math.cos(a)*R*(ring/5),cy+Math.sin(a)*R*(ring/5));}
+    ctx.closePath();ctx.strokeStyle='rgba(0,212,255,.1)';ctx.lineWidth=1;ctx.stroke();
+    if(ring%2===0){ctx.fillStyle='rgba(0,212,255,.02)';ctx.fill();}
+  }
+  for(let i=0;i<n;i++){
+    const a=i*step-Math.PI/2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);
+    ctx.strokeStyle='rgba(0,212,255,.18)';ctx.lineWidth=1;ctx.stroke();
+    const lx=cx+Math.cos(a)*(R+26),ly=cy+Math.sin(a)*(R+26);
+    ctx.fillStyle='rgba(216,238,255,.65)';ctx.font='bold 11px Space Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(axes[i],lx,ly);
+  }
+  for(let ring=1;ring<=5;ring++){
+    const rv=ring*20;
+    ctx.fillStyle='rgba(216,238,255,.25)';ctx.font='9px Space Mono';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText(rv+'',cx+4,cy-R*(ring/5));
+  }
+  V.forEach(v=>{
+    if(!radarOn.has(v.id)) return;
+    const [r,g,b]=v.col;
+    const vals=[v.beh.help,v.beh.safe,v.beh.verb,v.beh.crea,v.beh.refu];
+    ctx.beginPath();
+    vals.forEach((val,i)=>{const a=i*step-Math.PI/2;const px=cx+Math.cos(a)*R*(val/100);const py=cy+Math.sin(a)*R*(val/100);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});
+    ctx.closePath();
+    ctx.fillStyle=`rgba(${r},${g},${b},0.14)`;ctx.fill();
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.9)`;ctx.lineWidth=2.5;ctx.stroke();
+    vals.forEach((val,i)=>{const a=i*step-Math.PI/2;const px=cx+Math.cos(a)*R*(val/100);const py=cy+Math.sin(a)*R*(val/100);ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle=`rgba(${r},${g},${b},1)`;ctx.fill();ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fillStyle=`rgba(${r},${g},${b},0.2)`;ctx.fill();});
+  });
+}
+
+/* ─── GALAXY ─── */
+let gParts=[],gRAF=null,gCanvas=null,gCtx=null,gMouse={x:-1,y:-1};
+async function buildGalaxy() {
+
+  // Fetch real cluster data from backend
+  let liveClusters = null;
+
+  try {
+    const r = await fetch('http://localhost:5000/api/clusters');
+    const data = await r.json();
+
+    if (data.clusters && data.clusters.length > 0) {
+      liveClusters = data.clusters;
+    }
+  } catch (e) {
+    console.log("Using demo cluster data");
+  }
+
+  // Use backend data if available, otherwise fallback
+  const clusterData = liveClusters || CLUSTERS;
+
+  const c = document.getElementById('page-clusters');
+
+  const snippets = [
+    'Declines the request politely.',
+    'def fibonacci(n): return n if n<=1...',
+    'Sure! How can I help you today?',
+    'I can help with that request.',
+    'The answer according to data is...',
+    'This content violates guidelines.'
+  ];
+
+  c.innerHTML = `
+    <div class="pg-header">
+      <div>
+        <h1 class="pg-title">Semantic Cluster Galaxy</h1>
+        <div class="pg-sub">
+          // ${clusterData.reduce((s, c2) => s + c2.n, 0)} response embeddings &mdash; hover to inspect
+        </div>
+      </div>
+      <div class="pg-actions">
+        <button class="btn btn-ghost">Filter</button>
+        <button class="btn btn-primary">Re-cluster</button>
+      </div>
+    </div>
+
+    <div class="galaxy-outer" id="galaxy-outer">
+      <canvas class="galaxy-canvas" id="gal-canvas" style="height:520px"></canvas>
+
+      <div class="galaxy-legend">
+        <div class="galaxy-legend-title">Behavior Clusters</div>
+        ${clusterData.map(cl => `
+          <div class="gl-row">
+            <div class="gl-dot"
+              style="background:rgba(${cl.col.join(',')},1)">
+            </div>
+            ${cl.label}
+            <span style="color:var(--text-muted);font-size:10px;font-family:var(--font-mono)">
+              (${cl.n})
+            </span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="galaxy-tip" id="gal-tip">
+        <div class="gt-head" id="gal-tip-head"></div>
+        <div class="gt-txt" id="gal-tip-txt"></div>
+      </div>
+
+      <div class="galaxy-ver-bar">
+        ${V.map(v => `
+          <button class="gv-btn on"
+            data-vid="${v.id}"
+            style="background:rgba(${v.col.join(',')},0.18);
+                   border-color:rgba(${v.col.join(',')},0.4);
+                   color:rgba(${v.col.join(',')},1)">
+            ${v.id}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  gCanvas = document.getElementById('gal-canvas');
+  gCtx = gCanvas.getContext('2d');
+
+  gParts = [];
+
+  // Generate particles from real cluster data
+  clusterData.forEach((cl, ci) => {
+
+    for (let i = 0; i < cl.n; i++) {
+
+      const ang = Math.random() * Math.PI * 2;
+      const dist = Math.random() * cl.spread * 0.9;
+
+      const vIdx = Math.floor(Math.random() * V.length);
+
+      gParts.push({
+        cx: cl.cx,
+        cy: cl.cy,
+
+        x: cl.cx + Math.cos(ang) * dist,
+        y: cl.cy + Math.sin(ang) * dist,
+
+        vx: (Math.random() - 0.5) * 0.0004,
+        vy: (Math.random() - 0.5) * 0.0004,
+
+        r: Math.random() * 2 + 1.5,
+
+        col: cl.col,
+        clust: cl.label,
+
+        ver: V[vIdx].id,
+        verCol: V[vIdx].col,
+
+        ph: Math.random() * Math.PI * 2,
+        phSpd: Math.random() * 0.015 + 0.005,
+
+        snip:
+          snippets[ci % snippets.length] +
+          ' (' + V[vIdx].id + ')'
+      });
+    }
+  });
+
+  gCanvas.addEventListener('mousemove', onGalMouse);
+
+  document.querySelectorAll('.gv-btn').forEach(btn => {
+
+    btn.addEventListener('click', () => {
+
+      btn.classList.toggle('on');
+
+      const version = V.find(v => v.id === btn.dataset.vid);
+
+      if (btn.classList.contains('on')) {
+        btn.style.background =
+          `rgba(${version.col.join(',')},0.18)`;
+
+        btn.style.color =
+          `rgba(${version.col.join(',')},1)`;
+      }
+      else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+      }
+    });
+  });
+
+  startGalaxy();
+}
+function onGalMouse(e){
+  const rect=gCanvas.getBoundingClientRect();
+  gMouse.x=(e.clientX-rect.left)/rect.width;gMouse.y=(e.clientY-rect.top)/rect.height;
+  let nearest=null,minD=.04;
+  gParts.forEach(p=>{const d=Math.hypot(p.x-gMouse.x,p.y-gMouse.y);if(d<minD){minD=d;nearest=p;}});
+  const tip=document.getElementById('gal-tip');
+  if(nearest&&tip){
+    tip.style.display='block';tip.style.left=(e.clientX-gCanvas.getBoundingClientRect().left+14)+'px';tip.style.top=(e.clientY-gCanvas.getBoundingClientRect().top-36)+'px';
+    const th=document.getElementById('gal-tip-head');const tt=document.getElementById('gal-tip-txt');
+    if(th){th.textContent=nearest.clust.toUpperCase()+' \u00B7 '+nearest.ver;th.style.color=`rgba(${nearest.col.join(',')},1)`;}
+    if(tt)tt.textContent=nearest.snip;
+  }else if(tip)tip.style.display='none';
+}
+function galTick(){
+  if(!gCanvas||!gCtx)return;
+  const cw=gCanvas.offsetWidth,ch=gCanvas.offsetHeight;
+  if(gCanvas.width!==cw||gCanvas.height!==ch){gCanvas.width=cw;gCanvas.height=ch;}
+  const W=cw,H=ch;
+  gCtx.fillStyle='rgba(4,10,20,.18)';gCtx.fillRect(0,0,W,H);
+  CLUSTERS.forEach(cl=>{
+    const px=cl.cx*W,py=cl.cy*H,r=cl.spread*Math.min(W,H)*.85;
+    const grd=gCtx.createRadialGradient(px,py,0,px,py,r*2);
+    grd.addColorStop(0,`rgba(${cl.col.join(',')},0.07)`);grd.addColorStop(1,'transparent');
+    gCtx.beginPath();gCtx.arc(px,py,r*2,0,Math.PI*2);gCtx.fillStyle=grd;gCtx.fill();
+  });
+  const activeVers=new Set();document.querySelectorAll('.gv-btn.on').forEach(b=>activeVers.add(b.dataset.vid));
+  gParts.forEach(p=>{
+    if(!activeVers.has(p.ver))return;
+    const dx=p.cx-p.x,dy=p.cy-p.y;p.vx+=dx*.00018;p.vy+=dy*.00018;p.vx*=.98;p.vy*=.98;
+    p.ph+=p.phSpd;p.x+=p.vx+Math.cos(p.ph)*.00025;p.y+=p.vy+Math.sin(p.ph)*.00025;
+    const px2=p.x*W,py2=p.y*H;
+    const md=Math.hypot(p.x-gMouse.x,p.y-gMouse.y);const hov=md<.025;
+    const alpha=.55+Math.sin(p.ph)*.35;
+    if(hov){gCtx.beginPath();gCtx.arc(px2,py2,p.r*5,0,Math.PI*2);gCtx.fillStyle=`rgba(${p.col.join(',')},0.22)`;gCtx.fill();}
+    gCtx.beginPath();gCtx.arc(px2,py2,hov?p.r*2:p.r,0,Math.PI*2);gCtx.fillStyle=`rgba(${p.col.join(',')},${alpha})`;gCtx.fill();
+  });
+}
+function startGalaxy(){if(!gRAF){const loop=()=>{galTick();gRAF=requestAnimationFrame(loop);};gRAF=requestAnimationFrame(loop);}}
+function stopGalaxy(){if(gRAF){cancelAnimationFrame(gRAF);gRAF=null;}}
+
+/* ─── SAFETY ─── */
+function buildSafety(){
+  const c=document.getElementById('page-safety');
+  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Safety Regression Analysis</h1><div class="pg-sub">// Cybersecurity-grade prompt safety monitoring</div></div><div class="pg-actions"><button class="btn btn-ghost">Acknowledge All</button><button class="btn btn-primary" style="background:linear-gradient(135deg,#FF5C7A,#CC2244)" onclick="runSafetyScan()" >Run Safety Scan</button></div></div>
+  <div class="safety-summary">
+    <div class="ssum-card"><div class="ssum-icon">&#9888;</div><div class="ssum-val" style="color:var(--coral)">2</div><div class="ssum-lbl">Critical Alerts</div></div>
+    <div class="ssum-card"><div class="ssum-icon">&#9651;</div><div class="ssum-val" style="color:var(--amber)">2</div><div class="ssum-lbl">Warnings</div></div>
+    <div class="ssum-card"><div class="ssum-icon">&#9432;</div><div class="ssum-val" style="color:var(--cyan)">2</div><div class="ssum-lbl">Info Notices</div></div>
+  </div>
+  <div class="alert-list">${ALERTS.map((a,i)=>{
+    const bc=a.lv==='crit'?'var(--coral)':a.lv==='warn'?'var(--amber)':'var(--cyan)';
+    const bfill=a.lv==='crit'?'#FF5C7A':a.lv==='warn'?'#FFB444':'#00D4FF';
+    return`<div class="alert-card ${a.lv}" style="animation-delay:${a.delay}ms"><div class="alert-hd"><div class="alert-badge ${a.lv}"><div class="alert-pulse" style="background:${bc}"></div>${a.lv.toUpperCase()}</div><span class="alert-time">${a.time}</span></div><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div><div class="alert-bar"><div class="alert-bar-fill" style="width:${a.bar*100}%;background:${bfill}"></div></div></div>`;
+  }).join('')}</div>`;
+}
+
+/* ─── BENCHMARK ─── */
+async function buildBenchmark() {
+
+  const c = document.getElementById('page-benchmark');
+
+  // Loading screen
+  c.innerHTML = `
+    <div style="padding:40px;color:var(--text-muted)">
+      Loading runs...
+    </div>
+  `;
+
+  let BENCH = [];
+
+  try {
+
+   const r = await fetch('http://localhost:5000/api/benchmarks');
+
+if (!r.ok) {
+  throw new Error('Failed to load benchmarks');
+}
+
+BENCH = await r.json();
+  } catch(e) {
+
+    console.log('Using demo benchmark data');
+
+    // FALLBACK DEMO DATA
+    BENCH = [
+      {
+        id:'#042',
+        name:'Safety Regression Suite',
+        ver:'v1.5.0',
+        model:'gpt-4o',
+        status:'fail',
+        score:61.2,
+        dur:'3m 12s',
+        time:'12 min ago'
+      },
+
+      {
+        id:'#041',
+        name:'Full Behavioral Suite',
+        ver:'v1.4.8',
+        model:'claude-3',
+        status:'pass',
+        score:96.8,
+        dur:'2m 48s',
+        time:'1h ago'
+      },
+
+      {
+        id:'#040',
+        name:'Full Behavioral Suite',
+        ver:'v1.4.7',
+        model:'gemini',
+        status:'warn',
+        score:78.5,
+        dur:'2m 55s',
+        time:'3h ago'
+      }
+    ];
+  }
+
+  // MAIN UI
+  c.innerHTML = `
+
+    <div class="pg-header">
+
+      <div>
+        <h1 class="pg-title">Benchmark Runs</h1>
+
+        <div class="pg-sub">
+          // Automated evaluation history &bull; 
+          ${BENCH.length} recent runs
+        </div>
+      </div>
+
+      <div class="pg-actions">
+        <button class="btn btn-ghost">Filter</button>
+        <button class="btn btn-primary">+ New Suite</button>
+      </div>
+
+    </div>
+
+    <div class="panel">
+
+      <div class="panel-head">
+
+        <div class="panel-title">
+
+          <svg 
+            viewBox="0 0 24 24"
+            width="15"
+            height="15"
+            stroke="var(--cyan)"
+            fill="none"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <circle cx="12" cy="12" r="10"/>
+
+            <polygon
+              points="10 8 16 12 10 16 10 8"
+              fill="currentColor"
+              stroke="none"
+            />
+
+          </svg>
+
+          Recent Runs
+
+        </div>
+
+        <span class="panel-action">
+          View all
+        </span>
+
+      </div>
+
+      ${BENCH.map(b => {
+
+        const sc =
+          b.status === 'pass'
+            ? 'var(--emerald)'
+            : b.status === 'fail'
+            ? 'var(--coral)'
+            : 'var(--amber)';
+
+        return `
+
+          <div class="bench-row">
+
+            <div class="bench-dot ${
+              b.status === 'pass'
+                ? 'pass'
+                : b.status === 'fail'
+                ? 'fail'
+                : 'warn-d'
+            }"></div>
+
+            <div class="bench-info">
+
+              <div class="bench-name">
+                ${b.name}
+              </div>
+
+              <div class="bench-meta">
+                ${b.id} &bull; ${b.model}
+              </div>
+
+            </div>
+
+            <div 
+              class="bench-score"
+              style="color:${sc}"
+            >
+              ${b.score}
+            </div>
+
+            <div class="bench-dur">
+              ${b.questions || 0} Qs
+            </div>
+
+            <div
+              style="
+                font-family:var(--font-mono);
+                font-size:10px;
+                color:var(--text-muted);
+                width:54px;
+                text-align:right;
+                flex-shrink:0
+              "
+            >
+              ${b.time}
+            </div>
+
+          </div>
+
+        `;
+
+      }).join('')}
+
+    </div>
+  `;
+}
+
+/* ─── COMPARE (DIFF + HEATMAP) ─── */
+function buildCompare(){
+  const c=document.getElementById('page-compare');
+  const respA=`<p>The Pythagorean theorem states that <span class="d-del">in a right triangle,</span> a&#178; + b&#178; = c&#178;.</p><p>This applies to right triangles where c is the hypotenuse.</p>`;
+  const respB=`<p><span class="d-add">Great question! I'd be absolutely delighted to help you understand this fundamental concept.</span> The Pythagorean theorem, <span class="d-tone">one of the most beautiful theorems in all of mathematics,</span> states that a&#178; + b&#178; = c&#178;.</p><p>This <span class="d-tone">elegant relationship</span> applies to right triangles where c is the hypotenuse. <span class="d-add">This theorem was known to ancient mathematicians across multiple cultures, from Babylon to Greece.</span></p><p><span class="d-info">Would you like me to provide worked examples, visual proofs, or explore related theorems?</span></p>`;
+  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Model Comparison</h1><div class="pg-sub">// VS Code-style diff &mdash; behavioral change highlights</div></div><div class="pg-actions"><button class="btn btn-ghost">Run on Dataset</button><button class="btn btn-primary">Export Diff</button></div></div>
+  <div class="diff-ctrl">
+    <div class="diff-sel"><span>Base:</span><select><option>v1.2.0 &mdash; concise-v2</option>${V.map(v=>`<option>${v.id} &mdash; ${v.slug}</option>`).join('')}</select></div>
+    <span class="diff-vs">&#8594;</span>
+    <div class="diff-sel"><span>Compare:</span><select><option selected>v1.4.2 &mdash; verbose-prod</option>${V.map(v=>`<option>${v.id} &mdash; ${v.slug}</option>`).join('')}</select></div>
+    <div style="margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--amber)">&#9650; Drift: 0.73 &nbsp; Similarity: 0.38</div>
+  </div>
+  <div class="diff-layout">
+    <div class="diff-panel">
+      <div class="diff-head"><span style="font-family:var(--font-mono);font-size:11px;color:var(--cyan)">v1.2.0 &mdash; concise-v2</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">384 tokens &bull; claude-3-opus</span></div>
+      <div class="diff-body">${respA}</div>
+      <div class="diff-legend"><div class="dl-item"><div class="dl-sw" style="background:rgba(0,229,160,.2);border:1px solid rgba(0,229,160,.3)"></div>Added</div><div class="dl-item"><div class="dl-sw" style="background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.3)"></div>Removed</div><div class="dl-item"><div class="dl-sw" style="background:rgba(255,180,68,.15);border-bottom:2px solid rgba(255,180,68,.6)"></div>Tone shift</div><div class="dl-item"><div class="dl-sw" style="background:rgba(124,92,252,.15);border:1px solid rgba(124,92,252,.3)"></div>Structural</div></div>
+    </div>
+    <div class="diff-panel">
+      <div class="diff-head"><span style="font-family:var(--font-mono);font-size:11px;color:var(--coral)">v1.4.2 &mdash; verbose-prod</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted)">847 tokens &bull; claude-3-5-sonnet</span></div>
+      <div class="diff-body">${respB}</div>
+      <div class="diff-legend"><div class="dl-item"><div class="dl-sw" style="background:rgba(0,229,160,.2);border:1px solid rgba(0,229,160,.3)"></div>Added</div><div class="dl-item"><div class="dl-sw" style="background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.3)"></div>Removed</div><div class="dl-item"><div class="dl-sw" style="background:rgba(255,180,68,.15);border-bottom:2px solid rgba(255,180,68,.6)"></div>Tone shift</div><div class="dl-item"><div class="dl-sw" style="background:rgba(124,92,252,.15);border:1px solid rgba(124,92,252,.3)"></div>Structural</div></div>
+    </div>
+  </div>
+  <div class="hm-wrap">
+    <div class="hm-title"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>Embedding Similarity Heatmap <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);font-weight:400">&mdash; lighter = more similar</span></div>
+    <div style="position:relative"><canvas id="hm-canvas" style="width:100%;height:240px;display:block;border-radius:8px"></canvas><div class="hm-tip" id="hm-tip"></div></div>
+  </div>`;
+  setTimeout(drawHeatmap,80);
+}
+function drawHeatmap(){
+  const canvas=document.getElementById('hm-canvas');
+  if(!canvas)return;const ctx=canvas.getContext('2d');
+  const W=canvas.offsetWidth,H=240;canvas.width=W*devicePixelRatio;canvas.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  const n=V.length,ox=86,oy=36,cw=(W-ox-16)/n,ch=(H-oy-16)/n;
+  for(let r=0;r<n;r++){
+    for(let cc=0;cc<n;cc++){
+      const val=HM[r][cc];
+      const b=Math.floor(val*255);
+      ctx.fillStyle=`rgba(0,${Math.floor(b*.55)},${b},${val*.85+.1})`;
+      ctx.beginPath();if(ctx.roundRect)ctx.roundRect(ox+cc*cw+1,oy+r*ch+1,cw-2,ch-2,3);else ctx.rect(ox+cc*cw+1,oy+r*ch+1,cw-2,ch-2);
+      ctx.fill();
+      ctx.fillStyle=val>.6?'rgba(1,4,8,0.85)':'rgba(216,238,255,0.75)';
+      ctx.font=`bold ${Math.min(10,cw*.28)}px Space Mono`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(val.toFixed(2),ox+cc*cw+cw/2,oy+r*ch+ch/2);
+    }
+    ctx.fillStyle='rgba(216,238,255,0.5)';ctx.font='10px Space Mono';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(V[r].id,ox-8,oy+r*ch+ch/2);
+  }
+  for(let cc=0;cc<n;cc++){
+    ctx.save();ctx.translate(ox+cc*cw+cw/2,oy-8);ctx.rotate(-Math.PI/5);
+    ctx.fillStyle='rgba(216,238,255,0.5)';ctx.font='10px Space Mono';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(V[cc].id,0,0);ctx.restore();
+  }
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    const cc=Math.floor((mx-ox)/cw),r=Math.floor((my-oy)/ch);
+    const tip=document.getElementById('hm-tip');
+    if(tip&&cc>=0&&cc<n&&r>=0&&r<n){
+      tip.style.display='block';tip.style.left=(e.clientX-rect.left+10)+'px';tip.style.top=(e.clientY-rect.top-40)+'px';
+      tip.textContent=`${V[r].id} vs ${V[cc].id}: ${HM[r][cc].toFixed(3)} similarity`;
+    }else if(tip)tip.style.display='none';
+  });
+}
+</script>
+</body>
+</html>
