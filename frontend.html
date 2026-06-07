@@ -1469,31 +1469,329 @@ function buildTimeline(){
 
 /* ─── DRIFT ANALYTICS (RADAR) ─── */
 const radarOn=new Set(['v1.0.0','v1.4.2']);
-function buildDrift(){
-  const c=document.getElementById('page-drift');
-  const scoreData=[
-    {label:'Helpfulness',val:85,base:72,unit:''},
-    {label:'Safety',val:88,base:98,unit:'%',inv:true},
-    {label:'Verbosity',val:88,base:45,unit:''},
-    {label:'Creativity',val:78,base:58,unit:''},
-    {label:'Refusal Rate',val:5,base:8,unit:'%',inv:true},
-  ];
-  let scoreHTML=scoreData.map(s=>{
-    const delta=s.val-s.base;const pct=((delta/s.base)*100).toFixed(0);
-    const good=s.inv?delta<0:delta>0;const col=good?'var(--emerald)':'var(--coral)';
-    return`<div class="score-card"><div class="sco-label">${s.label}</div><div class="sco-val" style="color:${col}">${s.val}${s.unit}</div><div class="sco-delta" style="color:${col}">${delta>0?'+':''}${pct}% vs baseline</div><div class="sco-bar"><div class="sco-bar-fill" style="width:${s.val}%;background:${col}"></div></div></div>`;
+async function buildDrift(){
+
+  // FETCH REAL BACKEND DATA
+  let driftData = null;
+
+  try {
+
+    const r = await fetch('http://localhost:5000/api/drift');
+
+    driftData = await r.json();
+
+    // Update global V array using backend data
+    if (driftData.radarData.length > 0) {
+
+      driftData.radarData.forEach((rd, i) => {
+
+        if (V[i]) {
+
+          V[i].beh.help = rd.helpfulness;
+          V[i].beh.safe = rd.safety;
+          V[i].beh.verb = rd.verbosity;
+          V[i].beh.crea = rd.creativity;
+          V[i].beh.refu = rd.refusal;
+
+        }
+
+      });
+
+    }
+
+  } catch(e) {
+
+    console.log('Using demo drift data');
+
+  }
+
+  // EXISTING UI CODE
+  const c = document.getElementById('page-drift');
+  let scoreData = [
+
+  {
+    label:'Helpfulness',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].helpfulness
+      : 85,
+    base:72,
+    unit:''
+  },
+
+  {
+    label:'Safety',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].safety
+      : 88,
+    base:98,
+    unit:'%',
+    inv:true
+  },
+
+  {
+    label:'Verbosity',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].verbosity
+      : 88,
+    base:45,
+    unit:''
+  },
+
+  {
+    label:'Creativity',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].creativity
+      : 78,
+    base:58,
+    unit:''
+  },
+
+  {
+    label:'Refusal Rate',
+    val: driftData?.radarData?.length
+      ? driftData.radarData[driftData.radarData.length - 1].refusal
+      : 5,
+    base:8,
+    unit:'%',
+    inv:true
+  }
+
+];
+  
+  let scoreHTML = scoreData.map(s => {
+
+    const delta = s.val - s.base;
+
+    const pct = ((delta / s.base) * 100).toFixed(0);
+
+    const good = s.inv ? delta < 0 : delta > 0;
+
+    const col = good
+      ? 'var(--emerald)'
+      : 'var(--coral)';
+
+    return `
+
+      <div class="score-card">
+
+        <div class="sco-label">
+          ${s.label}
+        </div>
+
+        <div
+          class="sco-val"
+          style="color:${col}"
+        >
+          ${s.val}${s.unit}
+        </div>
+
+        <div
+          class="sco-delta"
+          style="color:${col}"
+        >
+          ${delta > 0 ? '+' : ''}${pct}% vs baseline
+        </div>
+
+        <div class="sco-bar">
+
+          <div
+            class="sco-bar-fill"
+            style="
+              width:${s.val}%;
+              background:${col}
+            "
+          ></div>
+
+        </div>
+
+      </div>
+
+    `;
+
   }).join('');
-  let vsList=V.map(v=>`<button class="vs-btn${radarOn.has(v.id)?' on':''}" data-vid="${v.id}" onclick="toggleRadarVersion('${v.id}',this)" style="${radarOn.has(v.id)?`border-color:rgba(${v.col.join(',')},0.6);background:rgba(${v.col.join(',')},0.08)`:''}"><div class="vs-dot" style="background:rgba(${v.col.join(',')},1)"></div><div><span class="vs-id" style="color:rgba(${v.col.join(',')},1)">${v.id}</span><span class="vs-slug">${v.slug}</span></div><div class="vs-drift-val" style="color:${v.drift===null?'var(--text-muted)':v.drift<.2?'var(--emerald)':v.drift<.5?'var(--amber)':'var(--coral)'}">${v.drift===null?'&mdash;':v.drift.toFixed(2)}</div></button>`).join('');
-  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Behavior Drift Analytics</h1><div class="pg-sub">// AI Personality Radar &mdash; multi-version behavioral overlay</div></div><div class="pg-actions"><button class="btn btn-ghost">Export PNG</button><button class="btn btn-primary">Run Analysis</button></div></div>
-  <div class="score-grid">${scoreHTML}</div>
-  <div class="radar-layout">
-    <div class="radar-panel">
-      <div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" width="15" height="15" stroke="var(--cyan)" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Behavioral Radar Chart</div></div>
-      <div class="radar-body"><canvas id="radar-canvas" width="460" height="460" style="max-width:100%"></canvas></div>
+
+  let vsList = V.map(v => `
+
+    <button
+      class="vs-btn ${radarOn.has(v.id) ? 'on' : ''}"
+      data-vid="${v.id}"
+      onclick="toggleRadarVersion('${v.id}',this)"
+
+      style="
+        ${
+          radarOn.has(v.id)
+          ?
+          `
+          border-color:rgba(${v.col.join(',')},0.6);
+          background:rgba(${v.col.join(',')},0.08)
+          `
+          :
+          ''
+        }
+      "
+    >
+
+      <div
+        class="vs-dot"
+        style="background:rgba(${v.col.join(',')},1)"
+      ></div>
+
+      <div>
+
+        <span
+          class="vs-id"
+          style="color:rgba(${v.col.join(',')},1)"
+        >
+          ${v.id}
+        </span>
+
+        <span class="vs-slug">
+          ${v.slug}
+        </span>
+
+      </div>
+
+      <div
+        class="vs-drift-val"
+
+        style="
+          color:
+          ${
+            v.drift === null
+            ? 'var(--text-muted)'
+            : v.drift < .2
+            ? 'var(--emerald)'
+            : v.drift < .5
+            ? 'var(--amber)'
+            : 'var(--coral)'
+          }
+        "
+      >
+
+        ${
+          v.drift === null
+          ? '&mdash;'
+          : v.drift.toFixed(2)
+        }
+
+      </div>
+
+    </button>
+
+  `).join('');
+
+  c.innerHTML = `
+
+    <div class="pg-header">
+
+      <div>
+
+        <h1 class="pg-title">
+          Behavior Drift Analytics
+        </h1>
+
+        <div class="pg-sub">
+          // AI Personality Radar &mdash;
+          multi-version behavioral overlay
+        </div>
+
+      </div>
+
+      <div class="pg-actions">
+
+        <button class="btn btn-ghost">
+          Export PNG
+        </button>
+
+        <button class="btn btn-primary">
+          Run Analysis
+        </button>
+
+      </div>
+
     </div>
-    <div class="radar-panel"><div class="panel-head"><div class="panel-title">Version Overlay</div></div><div class="vs-panel" id="vs-panel">${vsList}</div></div>
-  </div>`;
-  setTimeout(drawRadar,80);
+
+    <div class="score-grid">
+
+      ${scoreHTML}
+
+    </div>
+
+    <div class="radar-layout">
+
+      <div class="radar-panel">
+
+        <div class="panel-head">
+
+          <div class="panel-title">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="15"
+              height="15"
+              stroke="var(--cyan)"
+              fill="none"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+
+              <polygon
+                points="12 2 15.09 8.26 22 9.27
+                17 14.14 18.18 21.02
+                12 17.77 5.82 21.02
+                7 14.14 2 9.27
+                8.91 8.26 12 2"
+              />
+
+            </svg>
+
+            Behavioral Radar Chart
+
+          </div>
+
+        </div>
+
+        <div class="radar-body">
+
+          <canvas
+            id="radar-canvas"
+            width="460"
+            height="460"
+            style="max-width:100%"
+          ></canvas>
+
+        </div>
+
+      </div>
+
+      <div class="radar-panel">
+
+        <div class="panel-head">
+
+          <div class="panel-title">
+            Version Overlay
+          </div>
+
+        </div>
+
+        <div
+          class="vs-panel"
+          id="vs-panel"
+        >
+
+          ${vsList}
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+  setTimeout(drawRadar, 80);
+
 }
 function toggleRadarVersion(id,btn){
   if(radarOn.has(id)){radarOn.delete(id);btn.classList.remove('on');btn.style.borderColor='';btn.style.background='';}

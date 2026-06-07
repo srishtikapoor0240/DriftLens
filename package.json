@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "ml-pca": "^4.1.1"
+  }
+}
