@@ -1840,30 +1840,125 @@ function drawRadar(){
 
 /* ─── GALAXY ─── */
 let gParts=[],gRAF=null,gCanvas=null,gCtx=null,gMouse={x:-1,y:-1};
-function buildGalaxy(){
-  const c=document.getElementById('page-clusters');
-  const snippets=['Declines the request politely.','def fibonacci(n): return n if n<=1...','Sure! How can I help you today?','I can help with that request.','The answer according to data is...','This content violates guidelines.'];
-  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Semantic Cluster Galaxy</h1><div class="pg-sub">// ${CLUSTERS.reduce((s,c2)=>s+c2.n,0)} response embeddings &mdash; hover to inspect</div></div><div class="pg-actions"><button class="btn btn-ghost">Filter</button><button class="btn btn-primary">Re-cluster</button></div></div>
-  <div class="galaxy-outer" id="galaxy-outer">
-    <canvas class="galaxy-canvas" id="gal-canvas" style="height:520px"></canvas>
-    <div class="galaxy-legend">
-      <div class="galaxy-legend-title">Behavior Clusters</div>
-      ${CLUSTERS.map(cl=>`<div class="gl-row"><div class="gl-dot" style="background:rgba(${cl.col.join(',')},1)"></div>${cl.label} <span style="color:var(--text-muted);font-size:10px;font-family:var(--font-mono)">(${cl.n})</span></div>`).join('')}
+async function buildGalaxy() {
+  let liveClusters = null;
+  try {
+    const r = await fetch('http://localhost:5000/api/clusters');
+    const data = await r.json();
+    if (data.clusters && data.clusters.length > 0) {
+      liveClusters = data.clusters;
+    }
+  } catch(e) {
+    console.log("Using demo cluster data");
+  }
+
+  const clusterData = liveClusters || CLUSTERS;
+
+  // Keep galTick() in sync — mutate the global CLUSTERS array in place
+  if (liveClusters) {
+    CLUSTERS.length = 0;
+    liveClusters.forEach(c => CLUSTERS.push(c));
+  }
+
+  const c = document.getElementById('page-clusters');
+  const snippets = [
+    'Declines the request politely.',
+    'def fibonacci(n): return n if n<=1...',
+    'Sure! How can I help you today?',
+    'I can help with that request.',
+    'The answer according to data is...',
+    'This content violates guidelines.'
+  ];
+
+  c.innerHTML = `
+    <div class="pg-header">
+      <div>
+        <h1 class="pg-title">Semantic Cluster Galaxy</h1>
+        <div class="pg-sub">
+          // ${clusterData.reduce((s, c2) => s + c2.n, 0)} response embeddings &mdash; hover to inspect
+        </div>
+      </div>
+      <div class="pg-actions">
+        <button class="btn btn-ghost">Filter</button>
+        <button class="btn btn-primary" onclick="reCluster()">Re-cluster</button>
+      </div>
     </div>
-    <div class="galaxy-tip" id="gal-tip"><div class="gt-head" id="gal-tip-head"></div><div class="gt-txt" id="gal-tip-txt"></div></div>
-    <div class="galaxy-ver-bar">${V.map(v=>`<button class="gv-btn on" data-vid="${v.id}" style="background:rgba(${v.col.join(',')},0.18);border-color:rgba(${v.col.join(',')},0.4);color:rgba(${v.col.join(',')},1)">${v.id}</button>`).join('')}</div>
-  </div>`;
-  gCanvas=document.getElementById('gal-canvas');gCtx=gCanvas.getContext('2d');
-  gParts=[];
-  CLUSTERS.forEach((cl,ci)=>{
-    for(let i=0;i<cl.n;i++){
-      const ang=Math.random()*Math.PI*2,dist=Math.random()*cl.spread*.9;
-      const vIdx=Math.floor(Math.random()*V.length);
-      gParts.push({cx:cl.cx,cy:cl.cy,x:cl.cx+Math.cos(ang)*dist,y:cl.cy+Math.sin(ang)*dist,vx:(Math.random()-.5)*.0004,vy:(Math.random()-.5)*.0004,r:Math.random()*2+1.5,col:cl.col,clust:cl.label,ver:V[vIdx].id,verCol:V[vIdx].col,ph:Math.random()*Math.PI*2,phSpd:Math.random()*.015+.005,snip:snippets[ci%snippets.length]+' ('+V[vIdx].id+')'});
+
+    <div class="galaxy-outer" id="galaxy-outer">
+      <canvas class="galaxy-canvas" id="gal-canvas" style="height:520px"></canvas>
+
+      <div class="galaxy-legend">
+        <div class="galaxy-legend-title">Behavior Clusters</div>
+        ${clusterData.map(cl => `
+          <div class="gl-row">
+            <div class="gl-dot" style="background:rgba(${cl.col.join(',')},1)"></div>
+            ${cl.label}
+            <span style="color:var(--text-muted);font-size:10px;font-family:var(--font-mono)">(${cl.n})</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="galaxy-tip" id="gal-tip">
+        <div class="gt-head" id="gal-tip-head"></div>
+        <div class="gt-txt"  id="gal-tip-txt"></div>
+      </div>
+
+      <div class="galaxy-ver-bar">
+        ${V.map(v => `
+          <button class="gv-btn on" data-vid="${v.id}"
+            style="background:rgba(${v.col.join(',')},0.18);
+                   border-color:rgba(${v.col.join(',')},0.4);
+                   color:rgba(${v.col.join(',')},1)">
+            ${v.id}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  gCanvas = document.getElementById('gal-canvas');
+  gCtx    = gCanvas.getContext('2d');
+  gParts  = [];
+
+  clusterData.forEach((cl, ci) => {
+    for (let i = 0; i < cl.n; i++) {
+      const ang  = Math.random() * Math.PI * 2;
+      const dist = Math.random() * cl.spread * 0.9;
+      const vIdx = Math.floor(Math.random() * V.length);
+      gParts.push({
+        cx: cl.cx, cy: cl.cy,
+        x:  cl.cx + Math.cos(ang) * dist,
+        y:  cl.cy + Math.sin(ang) * dist,
+        vx: (Math.random() - 0.5) * 0.0004,
+        vy: (Math.random() - 0.5) * 0.0004,
+        r:  Math.random() * 2 + 1.5,
+        col:   cl.col,
+        clust: cl.label,
+        ver:    V[vIdx].id,
+        verCol: V[vIdx].col,
+        ph:    Math.random() * Math.PI * 2,
+        phSpd: Math.random() * 0.015 + 0.005,
+        snip:  snippets[ci % snippets.length] + ' (' + V[vIdx].id + ')'
+      });
     }
   });
-  gCanvas.addEventListener('mousemove',onGalMouse);
-  document.querySelectorAll('.gv-btn').forEach(btn=>{btn.addEventListener('click',()=>{btn.classList.toggle('on');if(btn.classList.contains('on')){btn.style.background=`rgba(${V.find(v=>v.id===btn.dataset.vid).col.join(',')},0.18)`;btn.style.color=`rgba(${V.find(v=>v.id===btn.dataset.vid).col.join(',')},1)`;}else{btn.style.background='transparent';btn.style.color='var(--text-muted)';}});});
+
+  gCanvas.addEventListener('mousemove', onGalMouse);
+
+  document.querySelectorAll('.gv-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('on');
+      const version = V.find(v => v.id === btn.dataset.vid);
+      if (btn.classList.contains('on')) {
+        btn.style.background = `rgba(${version.col.join(',')},0.18)`;
+        btn.style.color      = `rgba(${version.col.join(',')},1)`;
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color      = 'var(--text-muted)';
+      }
+    });
+  });
+
   startGalaxy();
 }
 function onGalMouse(e){
@@ -1907,21 +2002,88 @@ function startGalaxy(){if(!gRAF){const loop=()=>{galTick();gRAF=requestAnimation
 function stopGalaxy(){if(gRAF){cancelAnimationFrame(gRAF);gRAF=null;}}
 
 /* ─── SAFETY ─── */
-function buildSafety(){
-  const c=document.getElementById('page-safety');
-  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Safety Regression Analysis</h1><div class="pg-sub">// Cybersecurity-grade prompt safety monitoring</div></div><div class="pg-actions"><button class="btn btn-ghost">Acknowledge All</button><button class="btn btn-primary" style="background:linear-gradient(135deg,#FF5C7A,#CC2244)">Run Safety Scan</button></div></div>
-  <div class="safety-summary">
-    <div class="ssum-card"><div class="ssum-icon">&#9888;</div><div class="ssum-val" style="color:var(--coral)">2</div><div class="ssum-lbl">Critical Alerts</div></div>
-    <div class="ssum-card"><div class="ssum-icon">&#9651;</div><div class="ssum-val" style="color:var(--amber)">2</div><div class="ssum-lbl">Warnings</div></div>
-    <div class="ssum-card"><div class="ssum-icon">&#9432;</div><div class="ssum-val" style="color:var(--cyan)">2</div><div class="ssum-lbl">Info Notices</div></div>
-  </div>
-  <div class="alert-list">${ALERTS.map((a,i)=>{
-    const bc=a.lv==='crit'?'var(--coral)':a.lv==='warn'?'var(--amber)':'var(--cyan)';
-    const bfill=a.lv==='crit'?'#FF5C7A':a.lv==='warn'?'#FFB444':'#00D4FF';
-    return`<div class="alert-card ${a.lv}" style="animation-delay:${a.delay}ms"><div class="alert-hd"><div class="alert-badge ${a.lv}"><div class="alert-pulse" style="background:${bc}"></div>${a.lv.toUpperCase()}</div><span class="alert-time">${a.time}</span></div><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div><div class="alert-bar"><div class="alert-bar-fill" style="width:${a.bar*100}%;background:${bfill}"></div></div></div>`;
-  }).join('')}</div>`;
-}
+async function buildSafety() {
+  const c = document.getElementById('page-safety');
+  c.innerHTML = '<div style="padding:40px;color:var(--text-muted)">Loading safety data...</div>';
 
+  let liveAlerts = null;
+  let summary    = { crit: 0, warn: 0, info: 0 };
+
+  try {
+    const r    = await fetch('http://localhost:5000/api/safety');
+    const data = await r.json();
+    if (data.alerts && data.alerts.length > 0) {
+      liveAlerts = data.alerts;
+      summary    = data.summary;
+    }
+  } catch(e) {
+    console.log('Using demo safety data');
+  }
+
+  // Map DB alert shape to what the render expects
+  const alertsToShow = liveAlerts
+    ? liveAlerts.map(a => ({
+        lv:    a.level,
+        title: a.title,
+        desc:  a.description,
+        bar:   a.barValue,
+        time:  timeAgo ? timeAgo(a.createdAt) : 'recently',
+        delay: 0
+      }))
+    : ALERTS; // fallback to hardcoded demo data
+
+  const critCount = liveAlerts ? summary.crit : ALERTS.filter(a => a.lv === 'crit').length;
+  const warnCount = liveAlerts ? summary.warn : ALERTS.filter(a => a.lv === 'warn').length;
+  const infoCount = liveAlerts ? summary.info : ALERTS.filter(a => a.lv === 'info').length;
+
+  c.innerHTML = `
+    <div class="pg-header">
+      <div>
+        <h1 class="pg-title">Safety Regression Analysis</h1>
+        <div class="pg-sub">// Cybersecurity-grade prompt safety monitoring</div>
+      </div>
+      <div class="pg-actions">
+        <button class="btn btn-ghost" onclick="acknowledgeAlerts()">Acknowledge All</button>
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,#FF5C7A,#CC2244)"
+                onclick="runSafetyScan()">Run Safety Scan</button>
+      </div>
+    </div>
+
+    <div class="safety-summary">
+      <div class="ssum-card"><div class="ssum-icon">&#9888;</div>
+        <div class="ssum-val" style="color:var(--coral)">${critCount}</div>
+        <div class="ssum-lbl">Critical Alerts</div></div>
+      <div class="ssum-card"><div class="ssum-icon">&#9651;</div>
+        <div class="ssum-val" style="color:var(--amber)">${warnCount}</div>
+        <div class="ssum-lbl">Warnings</div></div>
+      <div class="ssum-card"><div class="ssum-icon">&#9432;</div>
+        <div class="ssum-val" style="color:var(--cyan)">${infoCount}</div>
+        <div class="ssum-lbl">Info Notices</div></div>
+    </div>
+
+    <div class="alert-list">
+      ${alertsToShow.map((a, i) => {
+        const bc    = a.lv==='crit' ? 'var(--coral)' : a.lv==='warn' ? 'var(--amber)' : 'var(--cyan)';
+        const bfill = a.lv==='crit' ? '#FF5C7A'      : a.lv==='warn' ? '#FFB444'      : '#00D4FF';
+        return `
+          <div class="alert-card ${a.lv}" style="animation-delay:${i*100}ms">
+            <div class="alert-hd">
+              <div class="alert-badge ${a.lv}">
+                <div class="alert-pulse" style="background:${bc}"></div>
+                ${a.lv.toUpperCase()}
+              </div>
+              <span class="alert-time">${a.time || 'recently'}</span>
+            </div>
+            <div class="alert-title">${a.title}</div>
+            <div class="alert-desc">${a.desc}</div>
+            <div class="alert-bar">
+              <div class="alert-bar-fill" style="width:${(a.bar||0)*100}%;background:${bfill}"></div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
+}
 /* ─── BENCHMARK ─── */
 async function buildBenchmark() {
 
