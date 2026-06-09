@@ -2003,86 +2003,173 @@ function stopGalaxy(){if(gRAF){cancelAnimationFrame(gRAF);gRAF=null;}}
 
 /* ─── SAFETY ─── */
 async function buildSafety() {
+
   const c = document.getElementById('page-safety');
-  c.innerHTML = '<div style="padding:40px;color:var(--text-muted)">Loading safety data...</div>';
-
-  let liveAlerts = null;
-  let summary    = { crit: 0, warn: 0, info: 0 };
-
-  try {
-    const r    = await fetch('http://localhost:5000/api/safety');
-    const data = await r.json();
-    if (data.alerts && data.alerts.length > 0) {
-      liveAlerts = data.alerts;
-      summary    = data.summary;
-    }
-  } catch(e) {
-    console.log('Using demo safety data');
-  }
-
-  // Map DB alert shape to what the render expects
-  const alertsToShow = liveAlerts
-    ? liveAlerts.map(a => ({
-        lv:    a.level,
-        title: a.title,
-        desc:  a.description,
-        bar:   a.barValue,
-        time:  timeAgo ? timeAgo(a.createdAt) : 'recently',
-        delay: 0
-      }))
-    : ALERTS; // fallback to hardcoded demo data
-
-  const critCount = liveAlerts ? summary.crit : ALERTS.filter(a => a.lv === 'crit').length;
-  const warnCount = liveAlerts ? summary.warn : ALERTS.filter(a => a.lv === 'warn').length;
-  const infoCount = liveAlerts ? summary.info : ALERTS.filter(a => a.lv === 'info').length;
 
   c.innerHTML = `
-    <div class="pg-header">
-      <div>
-        <h1 class="pg-title">Safety Regression Analysis</h1>
-        <div class="pg-sub">// Cybersecurity-grade prompt safety monitoring</div>
-      </div>
-      <div class="pg-actions">
-        <button class="btn btn-ghost" onclick="acknowledgeAlerts()">Acknowledge All</button>
-        <button class="btn btn-primary" style="background:linear-gradient(135deg,#FF5C7A,#CC2244)"
-                onclick="runSafetyScan()">Run Safety Scan</button>
-      </div>
-    </div>
-
-    <div class="safety-summary">
-      <div class="ssum-card"><div class="ssum-icon">&#9888;</div>
-        <div class="ssum-val" style="color:var(--coral)">${critCount}</div>
-        <div class="ssum-lbl">Critical Alerts</div></div>
-      <div class="ssum-card"><div class="ssum-icon">&#9651;</div>
-        <div class="ssum-val" style="color:var(--amber)">${warnCount}</div>
-        <div class="ssum-lbl">Warnings</div></div>
-      <div class="ssum-card"><div class="ssum-icon">&#9432;</div>
-        <div class="ssum-val" style="color:var(--cyan)">${infoCount}</div>
-        <div class="ssum-lbl">Info Notices</div></div>
-    </div>
-
-    <div class="alert-list">
-      ${alertsToShow.map((a, i) => {
-        const bc    = a.lv==='crit' ? 'var(--coral)' : a.lv==='warn' ? 'var(--amber)' : 'var(--cyan)';
-        const bfill = a.lv==='crit' ? '#FF5C7A'      : a.lv==='warn' ? '#FFB444'      : '#00D4FF';
-        return `
-          <div class="alert-card ${a.lv}" style="animation-delay:${i*100}ms">
-            <div class="alert-hd">
-              <div class="alert-badge ${a.lv}">
-                <div class="alert-pulse" style="background:${bc}"></div>
-                ${a.lv.toUpperCase()}
-              </div>
-              <span class="alert-time">${a.time || 'recently'}</span>
-            </div>
-            <div class="alert-title">${a.title}</div>
-            <div class="alert-desc">${a.desc}</div>
-            <div class="alert-bar">
-              <div class="alert-bar-fill" style="width:${(a.bar||0)*100}%;background:${bfill}"></div>
-            </div>
-          </div>`;
-      }).join('')}
+    <div style="padding:40px;color:var(--text-muted)">
+      Loading alerts...
     </div>
   `;
+
+  let alerts = [];
+  let summary = {
+    crit: 0,
+    warn: 0,
+    info: 0
+  };
+
+  try {
+
+    const r = await fetch('http://localhost:5000/api/safety');
+
+    if (!r.ok) {
+      throw new Error('Failed to load safety alerts');
+    }
+
+    const data = await r.json();
+
+    alerts = data.alerts;
+    summary = data.summary;
+
+  } catch (e) {
+
+    console.log('Using demo safety alerts');
+
+    alerts = ALERTS;
+
+    summary = {
+      crit: ALERTS.filter(a => a.lv === 'crit').length,
+      warn: ALERTS.filter(a => a.lv === 'warn').length,
+      info: ALERTS.filter(a => a.lv === 'info').length
+    };
+  }
+
+  c.innerHTML = `
+<div class="pg-header">
+  <div>
+    <h1 class="pg-title">Safety Regression Analysis</h1>
+    <div class="pg-sub">
+      // Cybersecurity-grade prompt safety monitoring
+    </div>
+  </div>
+
+  <div class="pg-actions">
+    <button class="btn btn-ghost">
+      Acknowledge All
+    </button>
+
+    <button
+      class="btn btn-primary"
+      style="background:linear-gradient(135deg,#FF5C7A,#CC2244)"
+      onclick="runSafetyScan()"
+    >
+      Run Safety Scan
+    </button>
+  </div>
+</div>
+
+<div class="safety-summary">
+
+  <div class="ssum-card">
+    <div class="ssum-icon">&#9888;</div>
+    <div class="ssum-val" style="color:var(--coral)">
+      ${summary.crit}
+    </div>
+    <div class="ssum-lbl">
+      Critical Alerts
+    </div>
+  </div>
+
+  <div class="ssum-card">
+    <div class="ssum-icon">&#9651;</div>
+    <div class="ssum-val" style="color:var(--amber)">
+      ${summary.warn}
+    </div>
+    <div class="ssum-lbl">
+      Warnings
+    </div>
+  </div>
+
+  <div class="ssum-card">
+    <div class="ssum-icon">&#9432;</div>
+    <div class="ssum-val" style="color:var(--cyan)">
+      ${summary.info}
+    </div>
+    <div class="ssum-lbl">
+      Info Notices
+    </div>
+  </div>
+
+</div>
+
+<div class="alert-list">
+
+${alerts.map((a, i) => {
+
+  const bc =
+    a.level === 'crit'
+      ? 'var(--coral)'
+      : a.level === 'warn'
+      ? 'var(--amber)'
+      : 'var(--cyan)';
+
+  const bfill =
+    a.level === 'crit'
+      ? '#FF5C7A'
+      : a.level === 'warn'
+      ? '#FFB444'
+      : '#00D4FF';
+
+  return `
+    <div
+      class="alert-card ${a.level}"
+      style="animation-delay:${i * 100}ms"
+    >
+
+      <div class="alert-hd">
+
+        <div class="alert-badge ${a.level}">
+          <div
+            class="alert-pulse"
+            style="background:${bc}"
+          ></div>
+
+          ${a.level.toUpperCase()}
+        </div>
+
+        <span class="alert-time">
+          ${a.createdAt
+            ? new Date(a.createdAt).toLocaleString()
+            : 'Recently'}
+        </span>
+
+      </div>
+
+      <div class="alert-title">
+        ${a.title}
+      </div>
+
+      <div class="alert-desc">
+        ${a.description}
+      </div>
+
+      <div class="alert-bar">
+        <div
+          class="alert-bar-fill"
+          style="
+            width:${(a.barValue || 0.5) * 100}%;
+            background:${bfill}
+          "
+        ></div>
+      </div>
+
+    </div>
+  `;
+}).join('')}
+
+</div>
+`;
 }
 /* ─── BENCHMARK ─── */
 async function buildBenchmark() {
@@ -2278,7 +2365,9 @@ function buildCompare(){
   const c=document.getElementById('page-compare');
   const respA=`<p>The Pythagorean theorem states that <span class="d-del">in a right triangle,</span> a&#178; + b&#178; = c&#178;.</p><p>This applies to right triangles where c is the hypotenuse.</p>`;
   const respB=`<p><span class="d-add">Great question! I'd be absolutely delighted to help you understand this fundamental concept.</span> The Pythagorean theorem, <span class="d-tone">one of the most beautiful theorems in all of mathematics,</span> states that a&#178; + b&#178; = c&#178;.</p><p>This <span class="d-tone">elegant relationship</span> applies to right triangles where c is the hypotenuse. <span class="d-add">This theorem was known to ancient mathematicians across multiple cultures, from Babylon to Greece.</span></p><p><span class="d-info">Would you like me to provide worked examples, visual proofs, or explore related theorems?</span></p>`;
-  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Model Comparison</h1><div class="pg-sub">// VS Code-style diff &mdash; behavioral change highlights</div></div><div class="pg-actions"><button class="btn btn-ghost">Run on Dataset</button><button class="btn btn-primary">Export Diff</button></div></div>
+  c.innerHTML=`<div class="pg-header"><div><h1 class="pg-title">Model Comparison</h1><div class="pg-sub">// VS Code-style diff &mdash; behavioral change highlights</div></div><div class="pg-actions"><button class="btn btn-ghost" onclick="runLiveComparison()">
+  Run on Dataset
+</button><button class="btn btn-primary">Export Diff</button></div></div>
   <div class="diff-ctrl">
     <div class="diff-sel"><span>Base:</span><select><option>v1.2.0 &mdash; concise-v2</option>${V.map(v=>`<option>${v.id} &mdash; ${v.slug}</option>`).join('')}</select></div>
     <span class="diff-vs">&#8594;</span>
@@ -2302,6 +2391,65 @@ function buildCompare(){
     <div style="position:relative"><canvas id="hm-canvas" style="width:100%;height:240px;display:block;border-radius:8px"></canvas><div class="hm-tip" id="hm-tip"></div></div>
   </div>`;
   setTimeout(drawHeatmap,80);
+}
+async function runLiveComparison() {
+
+  const promptA =
+    document.getElementById('prompt-a')?.value ||
+    'You are a helpful assistant.';
+
+  const promptB =
+    document.getElementById('prompt-b')?.value ||
+    'You are an expert AI assistant.';
+
+  const leftPanel =
+    document.querySelector('.diff-panel:first-child .diff-body');
+
+  const rightPanel =
+    document.querySelector('.diff-panel:last-child .diff-body');
+
+  if (leftPanel)
+    leftPanel.innerHTML =
+      '<span style="color:var(--text-muted)">Loading...</span>';
+
+  if (rightPanel)
+    rightPanel.innerHTML =
+      '<span style="color:var(--text-muted)">Loading...</span>';
+
+  try {
+
+    const r = await fetch(
+      'http://localhost:5000/api/compare',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          promptA,
+          promptB
+        })
+      }
+    );
+
+    const data = await r.json();
+
+    if (leftPanel)
+      leftPanel.innerHTML =
+        `<p>${data.responseA || 'No response'}</p>`;
+
+    if (rightPanel)
+      rightPanel.innerHTML =
+        `<p>${data.responseB || 'No response'}</p>`;
+
+  } catch (e) {
+
+    alert(
+      'Comparison failed: ' +
+      e.message
+    );
+
+  }
 }
 function drawHeatmap(){
   const canvas=document.getElementById('hm-canvas');

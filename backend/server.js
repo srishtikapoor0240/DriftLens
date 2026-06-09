@@ -15,10 +15,9 @@ app.use('/api/clusters',   require('./routes/clusters'));
 app.use('/api/safety',     require('./routes/safety'));
 app.use('/api/overview',   require('./routes/overview'));
 app.use('/api/drift',      require('./routes/drift'));
+app.use('/api/compare', require('./routes/compare'));
 
 app.get('/', (req, res) => res.json({ status: 'DriftLens backend running' }));
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-// Prevent process exit
-const prisma = require('./db');
-prisma.$connect();
+
